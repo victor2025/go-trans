@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
 	"go-trans/handlers"
+	"log"
 )
 
 var (
@@ -22,7 +22,7 @@ func main() {
 		return
 	}
 
-	log.Println("--- go-trans: a file transmitter by go ---")
+	log.Println("--- go-trans: a file transmitter by go (press ctrl+c to exit) ---")
 	// 判断参数合法性
 	if isReceive {
 		sHandler := handlers.NewReceiveHandler(port, output)

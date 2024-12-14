@@ -55,12 +55,25 @@ func (s *ReceiveHandler) startServer() {
 	// start tcp listen
 	listener, err := net.Listen("tcp", ":"+s.port)
 	utils.HandleError(err, utils.ExitOnErr)
-	log.Printf("Listening :%s\n", s.port)
+	log.Printf("Listening to:%s, Serve on:\n", s.port)
 	s.listener = listener
+	// show local ip
+	addrs, err := net.InterfaceAddrs()
+	utils.HandleError(err, utils.ExitOnErr)
+	addrIdx := 0
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil || ipnet.IP.To16() != nil {
+				addrIdx++
+				log.Printf("%d:\t%s\n", addrIdx, ipnet.IP.String())
+			}
+		}
+	}
+
 }
 
 func (s *ReceiveHandler) serveConn(conn net.Conn) {
-	log.Printf("--- New connection ---")
+	log.Printf("--- New connection from %s ---", conn.RemoteAddr())
 	start := time.Now()
 	defer conn.Close()
 	var err error
@@ -68,12 +81,10 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	// init file
 	file, fileSize, err := s.initFile(conn)
 	utils.HandleError(err)
-	if file != nil {
-		defer file.Close()
+	if file == nil || err != nil {
+		log.Printf("WARN: init file failed, error:%s", err)
 	}
-	if err != nil {
-		return
-	}
+	defer file.Close()
 
 	// write file
 	seq := 0
@@ -88,9 +99,9 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 			return
 		}
 
-		// if is end
+		// if is ended
 		if trans.Head.Type == protocols.EndType {
-			rcvdMd5 = hex.EncodeToString(trans.Content) // get remote md5
+			rcvdMd5 = hex.EncodeToString(trans.Content) // get remote md5Val
 			break
 		}
 
@@ -112,13 +123,13 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	// show end status
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := float32(dataSize) / (1024 * dur / 1000)
-	md5 := hex.EncodeToString(md5Chk.Sum(nil))
+	md5Val := hex.EncodeToString(md5Chk.Sum(nil))
 	log.Printf("--- Receive file complete ---")
 	log.Printf("Filepath: %s", file.Name())
-	log.Printf("MD5: %s", md5)
+	log.Printf("MD5: %s", md5Val)
 	log.Printf("Info: total time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
-	if md5 != rcvdMd5 {
-		log.Printf("WARN: File md5 is different, please check manually!")
+	if md5Val != rcvdMd5 {
+		log.Printf("WARN: File md5Val is different, please check manually!")
 	}
 }
 
