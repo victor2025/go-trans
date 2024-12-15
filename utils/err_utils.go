@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	ExitOnErr = func() { os.Exit(1) }
+	ExitOnErr      = func() { os.Exit(1) }
+	DoNothingOnErr = func() {}
 )
 
 // err: error object

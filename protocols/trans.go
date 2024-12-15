@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	magic              = 151 // magic number
-	headSize           = 4   // size of head
-	ByteType TransType = 0
-	StrType  TransType = 1
-	NumType  TransType = 2
-	EndType  TransType = 3
+	magic                    = 151 // magic number
+	headSize                 = 4   // size of head
+	ByteType       TransType = 0
+	StrType        TransType = 1
+	NumType        TransType = 2
+	NewFileType    TransType = 3
+	EndType        TransType = 4
+	DisconnectType TransType = 5
 )
 
 type TRANS struct {

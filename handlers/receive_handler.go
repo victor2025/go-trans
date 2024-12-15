@@ -74,8 +74,28 @@ func (s *ReceiveHandler) startServer() {
 
 func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	log.Printf("--- New connection from %s ---", conn.RemoteAddr())
-	start := time.Now()
 	defer conn.Close()
+	start := time.Now()
+	totalDataSize := int64(0)
+	for {
+		trans, err := protocols.ReceiveNextTrans(conn)
+		utils.HandleError(err, utils.ExitOnErr)
+		if trans.Head.Type == protocols.DisconnectType {
+			break
+		}
+		if trans.Head.Type == protocols.NewFileType {
+			dataSize, err := s.receiveNewFile(conn)
+			utils.HandleError(err, utils.DoNothingOnErr)
+			totalDataSize += dataSize
+		}
+	}
+	dur := float32(time.Since(start).Microseconds()) / 1000
+	avgSpeed := float32(totalDataSize) / (1024 * dur / 1000)
+	log.Printf("--- Info: receive file complete, total time: %.2fms, avg speed %.2fKB/s ---\n", dur, avgSpeed)
+}
+
+func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
+	start := time.Now()
 	var err error
 
 	// init file
@@ -88,7 +108,7 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 
 	// write file
 	seq := 0
-	dataSize := 0
+	dataSize := int64(0)
 	var rcvdMd5 string
 	md5Chk := md5.New()
 	for {
@@ -96,7 +116,7 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 		trans, err := protocols.ReceiveNextTrans(conn)
 		utils.HandleError(err)
 		if err != nil {
-			return
+			return 0, err
 		}
 
 		// if is ended
@@ -109,13 +129,13 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 		_, err = file.Write(trans.Content)
 		utils.HandleError(err)
 		if err != nil {
-			return
+			return 0, err
 		}
 		md5Chk.Write(trans.Content)
 
 		// show status
 		seq++
-		dataSize += len(trans.Content)
+		dataSize += int64(len(trans.Content))
 		log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
 
 	}
@@ -127,13 +147,17 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	log.Printf("--- Receive file complete ---")
 	log.Printf("Filepath: %s", file.Name())
 	log.Printf("MD5: %s", md5Val)
-	log.Printf("Info: total time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
+	log.Printf("Info: cost time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
 	if md5Val != rcvdMd5 {
 		log.Printf("WARN: File md5Val is different, please check manually!")
+		return 0, fmt.Errorf("file md5 not match fileMd5:%s, actualMd5:%s", md5Val, rcvdMd5)
 	}
+	return dataSize, nil
 }
 
-// return file, file size, error
+/**
+接收文件名，创建目标文件
+*/
 func (r *ReceiveHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 	var err error
 
