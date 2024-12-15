@@ -7,6 +7,7 @@ import (
 	"go-trans/protocols"
 	"go-trans/utils"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -18,6 +19,7 @@ type SendHandler struct {
 	addr      string
 	port      string
 	path      string
+	baseDir   string
 	sliceSize uint16
 }
 
@@ -32,27 +34,50 @@ func NewSendHandler(addr, port, path string) *SendHandler {
 
 func (s *SendHandler) Handle() {
 	log.Printf("--- Send mode ---")
-	start := time.Now()
-	// open local file
-	absPath, err := filepath.Abs(s.path)
-	if utils.IsDir(absPath) { // make sure is file
-		err = fmt.Errorf("filepath invalid")
-	}
-	utils.HandleError(err, utils.ExitOnErr)
-	file, err := os.Open(absPath)
-	utils.HandleError(err, utils.ExitOnErr)
-	defer file.Close()
 
 	// connect server
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", s.addr, s.port))
 	utils.HandleError(err, utils.ExitOnErr)
 	defer conn.Close()
 	log.Printf("Connected to %s:%s", s.addr, s.port)
+	// open local file
+	absPath, err := filepath.Abs(s.path)
+	var fileOrDirName string
+	s.baseDir, fileOrDirName = filepath.Split(absPath)
+	if utils.IsDir(absPath) {
+		// send the whole dir
+		s.walkAndSendDir(conn, absPath, fileOrDirName)
+	} else {
+		// send single file
+		s.sendFile(conn, fileOrDirName)
+	}
+}
 
+func (s *SendHandler) walkAndSendDir(conn net.Conn, dirPath string, dirPrefix string) {
+	files, _ := ioutil.ReadDir(dirPath)
+
+	for _, onefile := range files {
+		if onefile.IsDir() {
+			log.Printf("Processing dir %s\n", onefile.Name())
+			//fmt.Println(tmpPrefix, onefile.Name(), "目录:")
+			s.walkAndSendDir(conn, onefile.Name(), dirPrefix+"/"+onefile.Name())
+		} else {
+			s.sendFile(conn, dirPrefix+"/"+onefile.Name())
+		}
+	}
+}
+
+/**
+发送单个文件
+*/
+func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) {
+	start := time.Now()
 	// send filename first
-	_, filename := filepath.Split(s.path)
-	log.Printf("Start transferring: %v", filename)
-	bytes := protocols.StrTransMsg(filename).Bytes()
+	file, err := os.Open(s.baseDir + fileRelativePath)
+	utils.HandleError(err, utils.ExitOnErr)
+	defer file.Close()
+	log.Printf("Start transferring: %v", fileRelativePath)
+	bytes := protocols.StrTransMsg(fileRelativePath).Bytes()
 	_, err = conn.Write(bytes)
 	utils.HandleError(err, utils.ExitOnErr)
 
@@ -112,5 +137,4 @@ func (s *SendHandler) Handle() {
 	log.Printf("Filepath: %s", file.Name())
 	log.Printf("MD5: %s", md5)
 	log.Printf("Info: total time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
-
 }
