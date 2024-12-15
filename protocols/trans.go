@@ -68,6 +68,12 @@ func EndTransMsg(md5 []byte) *TRANS {
 	return trans
 }
 
+func EmptyBodyTransMsg(transType TransType) *TRANS {
+	trans := ByteTransMsg(make([]byte, 0))
+	trans.Head.Type = transType
+	return trans
+}
+
 func ReceiveNextTrans(conn net.Conn) (*TRANS, error) {
 	var err error
 	// read head

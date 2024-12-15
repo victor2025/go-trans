@@ -76,7 +76,7 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	log.Printf("--- New connection from %s ---", conn.RemoteAddr())
 	defer conn.Close()
 	start := time.Now()
-	totalDataSize := int64(0)
+	totalSize := int64(0)
 	for {
 		trans, err := protocols.ReceiveNextTrans(conn)
 		utils.HandleError(err, utils.ExitOnErr)
@@ -86,12 +86,13 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 		if trans.Head.Type == protocols.NewFileType {
 			dataSize, err := s.receiveNewFile(conn)
 			utils.HandleError(err, utils.DoNothingOnErr)
-			totalDataSize += dataSize
+			totalSize += dataSize
 		}
 	}
+	sizeInKBytes := float32(totalSize) / 1024
 	dur := float32(time.Since(start).Microseconds()) / 1000
-	avgSpeed := float32(totalDataSize) / (1024 * dur / 1000)
-	log.Printf("--- Info: receive file complete, total time: %.2fms, avg speed %.2fKB/s ---\n", dur, avgSpeed)
+	avgSpeed := sizeInKBytes / (dur / 1000)
+	log.Printf("--- Info: receive file complete, total time: %.2fms, total size: %.2fKB, avg speed %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 }
 
 func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
