@@ -64,7 +64,7 @@ func (s *SendHandler) Handle() {
 	sizeInKBytes := float32(totalSize) / 1024
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := sizeInKBytes / (dur / 1000)
-	log.Printf("Info: send file complete, total size: %.2f, total time: %.2fms, avg speed: %.2fKB/s\n", dur, sizeInKBytes, avgSpeed)
+	log.Printf("--- Info: send file complete, total size: %.2fKB, total time: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 }
 
 /**
@@ -162,7 +162,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	log.Printf("--- Send file complete ---")
 	log.Printf("Filepath: %s", file.Name())
 	log.Printf("MD5: %s", md5Val)
-	log.Printf("Info: total time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
+	log.Printf("Info: cost time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
 
 	return fileSize, nil
 }
