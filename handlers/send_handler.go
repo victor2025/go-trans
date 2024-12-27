@@ -67,9 +67,7 @@ func (s *SendHandler) Handle() {
 	log.Printf("--- Info: send file complete, total size: %.2fKB, total time: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 }
 
-/**
-遍历文件夹并发送文件
-*/
+// 遍历文件夹并发送文件
 func (s *SendHandler) walkAndSendDir(conn net.Conn, dirPath string, dirPrefix string) (int64, error) {
 	files, _ := ioutil.ReadDir(dirPath)
 

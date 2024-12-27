@@ -34,6 +34,7 @@ type THead struct {
 
 type TransType uint8
 
+// ByteTransMsg 字节类型消息体
 func ByteTransMsg(data []byte) *TRANS {
 	// 配置数据
 	size := uint16(headSize + len(data)) // head + content
@@ -48,32 +49,37 @@ func ByteTransMsg(data []byte) *TRANS {
 	}
 }
 
+// StrTransMsg 字符串类型消息体
 func StrTransMsg(data string) *TRANS {
 	trans := ByteTransMsg([]byte(data))
 	trans.Head.Type = StrType
 	return trans
 }
 
+// NumTransMsg 数值类型消息体
 func NumTransMsg(data int64) *TRANS {
-	bytes := make([]byte, 64)
-	n := binary.PutVarint(bytes, data)
-	trans := ByteTransMsg(bytes[:n])
+	byteArr := make([]byte, 64)
+	n := binary.PutVarint(byteArr, data)
+	trans := ByteTransMsg(byteArr[:n])
 	trans.Head.Type = NumType
 	return trans
 }
 
+// EndTransMsg 终止消息体
 func EndTransMsg(md5 []byte) *TRANS {
 	trans := ByteTransMsg(md5)
 	trans.Head.Type = EndType
 	return trans
 }
 
+// EmptyBodyTransMsg 空消息体
 func EmptyBodyTransMsg(transType TransType) *TRANS {
 	trans := ByteTransMsg(make([]byte, 0))
 	trans.Head.Type = transType
 	return trans
 }
 
+// ReceiveNextTrans 接收下一个消息体
 func ReceiveNextTrans(conn net.Conn) (*TRANS, error) {
 	var err error
 	// read head

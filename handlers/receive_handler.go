@@ -50,6 +50,7 @@ func (s *ReceiveHandler) Handle() {
 	}
 }
 
+// 启用服务器
 func (s *ReceiveHandler) startServer() {
 	log.Printf("--- Receive mode ---")
 	// start tcp listen
@@ -72,6 +73,7 @@ func (s *ReceiveHandler) startServer() {
 
 }
 
+// 处理连接
 func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	log.Printf("--- New connection from %s ---", conn.RemoteAddr())
 	defer conn.Close()
@@ -95,6 +97,7 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	log.Printf("--- Info: receive file complete, total time: %.2fms, total size: %.2fKB, avg speed %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 }
 
+// 接收新文件
 func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 	start := time.Now()
 	var err error
@@ -156,9 +159,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 	return dataSize, nil
 }
 
-/**
-接收文件名，创建目标文件
-*/
+// 初始化文件
 func (r *ReceiveHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 	var err error
 
