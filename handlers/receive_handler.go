@@ -18,6 +18,7 @@ type ReceiveHandler struct {
 	port     string
 	basePath string
 	listener net.Listener
+	isOn     bool
 }
 
 func NewReceiveHandler(port, basePath string) *ReceiveHandler {
@@ -30,15 +31,25 @@ func NewReceiveHandler(port, basePath string) *ReceiveHandler {
 }
 
 func (s *ReceiveHandler) Handle() {
+	log.Printf("start receive server at port %s", s.port)
 	// 开启服务
 	s.startServer()
-	defer s.listener.Close() // 退出时关闭服务
+	defer func() {
+		if s.isOn {
+			s.listener.Close()
+		}
+	}() // 退出时关闭服务
 
 	// 循环处理请求
 	for {
 		isNormal := true
 		// wait for connection
 		conn, err := s.listener.Accept()
+		// judge is on
+		if !s.isOn {
+			break
+		}
+		// handle error
 		utils.HandleError(err, func() { isNormal = false })
 		if !isNormal {
 			continue
@@ -48,6 +59,12 @@ func (s *ReceiveHandler) Handle() {
 		go s.serveConn(conn)
 
 	}
+}
+
+func (s *ReceiveHandler) StopHandle() {
+	log.Printf("stop receive server at port %s", s.port)
+	s.isOn = false
+	s.listener.Close()
 }
 
 // 启用服务器
@@ -70,7 +87,7 @@ func (s *ReceiveHandler) startServer() {
 			}
 		}
 	}
-
+	s.isOn = true
 }
 
 // 处理连接
