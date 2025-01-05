@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	handlers2 "go-trans/modules/transmit/handlers"
+	handlers2 "go-trans/pkg/transmit/handlers"
 	"log"
 )
 

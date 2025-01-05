@@ -1,10 +1,6 @@
 package main
 
-import (
-	"go-trans/context"
-	"log"
-	"time"
-)
+import "go-trans/http"
 
 /**
   @author: victor2022
@@ -12,12 +8,13 @@ import (
 */
 
 func main() {
-	context.GetSystemContext().StartReceiveServer()
-	for i := 0; i < 2; i++ {
-		time.Sleep(1 * time.Second)
-		log.Printf("wait: %d", i)
-	}
-	context.GetSystemContext().StopReceiveServer()
-	for {
-	}
+	//context.GetSystemContext().StartReceiveServer()
+	//for i := 0; i < 2; i++ {
+	//	time.Sleep(1 * time.Second)
+	//	log.Printf("wait: %d", i)
+	//}
+	//context.GetSystemContext().StopReceiveServer()
+	//for {
+	//}
+	http.StartHttpServer()
 }
