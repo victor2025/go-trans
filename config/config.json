@@ -1,0 +1,18 @@
+{
+  "http" : {
+    "server" : {
+      "port" : "8080"
+    }
+  },
+  "transmit": {
+    "server": {
+      "port": "20235",
+      "filepath": "./received"
+    }
+  },
+  "data": {
+    "sqlite": {
+      "dbpath": "./db"
+    }
+  }
+}

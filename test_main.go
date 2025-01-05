@@ -1,6 +1,10 @@
 package main
 
-import "go-trans/http"
+import (
+	"fmt"
+	"go-trans/http"
+	"go-trans/services"
+)
 
 /**
   @author: victor2022
@@ -8,6 +12,9 @@ import "go-trans/http"
 */
 
 func main() {
+
+	config := services.NewConfigService().GetOrDefault("http.server.port", "")
+	fmt.Printf("config:%v\n", config)
 	//context.GetSystemContext().StartReceiveServer()
 	//for i := 0; i < 2; i++ {
 	//	time.Sleep(1 * time.Second)
