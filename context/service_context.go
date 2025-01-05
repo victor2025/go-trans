@@ -12,6 +12,7 @@ import (
 
 type SystemContext struct {
 	serverService *services.TransmitService
+	configService *services.ConfigService
 }
 
 var systemContext *SystemContext
@@ -22,14 +23,16 @@ func GetSystemContext() *SystemContext {
 	once.Do(func() {
 		systemContext = &SystemContext{
 			serverService: services.NewServerService(),
+			configService: services.NewConfigService(),
 		}
 	})
 	return systemContext
 }
 
 func (s *SystemContext) StartReceiveServer() {
-	// todo load props from propService
-	s.serverService.StartReceiveServer("20235", "./.received")
+	port := s.configService.GetOrDefault("transmit.server.port", "20235")
+	filePath := s.configService.GetOrDefault("transmit.server.filepath", "./received")
+	s.serverService.StartReceiveServer(port, filePath)
 }
 
 func (s *SystemContext) StopReceiveServer() {
