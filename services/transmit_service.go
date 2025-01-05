@@ -1,7 +1,7 @@
 package services
 
 import (
-	"go-trans/handlers"
+	"go-trans/modules/transmit/handlers"
 	"log"
 )
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"C"
-	"go-trans/handlers"
+	"go-trans/modules/transmit/handlers"
 )
 
 //export StartUp

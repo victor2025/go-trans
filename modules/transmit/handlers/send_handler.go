@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"go-trans/protocols"
+	"go-trans/modules/transmit/protocols"
 	"go-trans/utils"
 	"io"
 	"io/ioutil"

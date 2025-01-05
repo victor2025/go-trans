@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"go-trans/protocols"
+	"go-trans/modules/transmit/protocols"
 	"go-trans/utils"
 	"log"
 	"net"
