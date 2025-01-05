@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -62,7 +63,7 @@ func (s *ReceiveHandler) Handle() {
 }
 
 func (s *ReceiveHandler) StopHandle() {
-	log.Printf("stop receive server at port %s", s.port)
+	log.Printf("Stop receive server at port: %s", s.port)
 	s.isOn = false
 	s.listener.Close()
 }
@@ -73,20 +74,23 @@ func (s *ReceiveHandler) startServer() {
 	// start tcp listen
 	listener, err := net.Listen("tcp", ":"+s.port)
 	utils.HandleError(err, utils.ExitOnErr)
-	log.Printf("Listening to:%s, Serve on:\n", s.port)
+	log.Printf("Listening to: %s", s.port)
 	s.listener = listener
 	// show local ip
 	addrs, err := net.InterfaceAddrs()
 	utils.HandleError(err, utils.ExitOnErr)
-	addrIdx := 0
+	var addrList = make([]string, 0)
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil || ipnet.IP.To16() != nil {
-				addrIdx++
-				log.Printf("%d:\t%s\n", addrIdx, ipnet.IP.String())
+				addrStr := ipnet.IP.String()
+				if len(addrStr) > 0 {
+					addrList = append(addrList, addrStr)
+				}
 			}
 		}
 	}
+	log.Printf("Serving on: %s", strings.Join(addrList, ",\t"))
 	s.isOn = true
 }
 

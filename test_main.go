@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-trans/services"
+	"go-trans/context"
 	"log"
 	"time"
 )
@@ -12,13 +12,12 @@ import (
 */
 
 func main() {
-	serverService := services.NewServerService()
-	serverService.StartReceiveServer("20235", ".received")
+	context.GetSystemContext().StartReceiveServer()
 	for i := 0; i < 2; i++ {
 		time.Sleep(1 * time.Second)
 		log.Printf("wait: %d", i)
 	}
-	serverService.StopReceiveServer()
+	context.GetSystemContext().StopReceiveServer()
 	for {
 	}
 }
