@@ -11,6 +11,7 @@ import (
 */
 func StartHttpServer() {
 	engine := initGinEngine()
+	// todo 读取配置
 	engine.Run(":8080")
 }
 
