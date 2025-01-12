@@ -2,7 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-trans/context"
 	"go-trans/http/api/system"
+	"go-trans/utils"
 )
 
 /**
@@ -11,8 +13,10 @@ import (
 */
 func StartHttpServer() {
 	engine := initGinEngine()
-	// todo 读取配置
-	engine.Run(":8080")
+	serverPort := context.GetServiceContext().GetConfigOrDefault("http.server.port", "8080")
+	// 读取配置
+	err := engine.Run(":" + serverPort)
+	utils.HandleError(err, utils.ExitOnErr)
 }
 
 func initGinEngine() *gin.Engine {

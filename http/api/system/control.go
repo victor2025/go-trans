@@ -17,11 +17,11 @@ func RegisterRouter(router *gin.RouterGroup) {
 }
 
 func startTransmitServer(c *gin.Context) {
-	context.GetSystemContext().StartReceiveServer()
+	context.GetServiceContext().StartReceiveServer()
 	response.NewSuccessResponse(c, "start success")
 }
 
 func stopTransmitServer(c *gin.Context) {
-	context.GetSystemContext().StopReceiveServer()
+	context.GetServiceContext().StopReceiveServer()
 	response.NewSuccessResponse(c, "stop success")
 }

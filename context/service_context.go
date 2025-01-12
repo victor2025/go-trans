@@ -10,31 +10,35 @@ import (
   @since: 2025/1/5
 */
 
-type SystemContext struct {
+type ServiceContext struct {
 	serverService *services.TransmitService
 	configService *services.ConfigService
 }
 
-var systemContext *SystemContext
+var serviceContext *ServiceContext
 var once = sync.Once{}
 
-// GetSystemContext 获取系统上下文
-func GetSystemContext() *SystemContext {
+// GetServiceContext 获取系统上下文
+func GetServiceContext() *ServiceContext {
 	once.Do(func() {
-		systemContext = &SystemContext{
+		serviceContext = &ServiceContext{
 			serverService: services.NewServerService(),
 			configService: services.NewConfigService(),
 		}
 	})
-	return systemContext
+	return serviceContext
 }
 
-func (s *SystemContext) StartReceiveServer() {
+func (s *ServiceContext) StartReceiveServer() {
 	port := s.configService.GetOrDefault("transmit.server.port", "20235")
 	filePath := s.configService.GetOrDefault("transmit.server.filepath", "./received")
 	s.serverService.StartReceiveServer(port, filePath)
 }
 
-func (s *SystemContext) StopReceiveServer() {
+func (s *ServiceContext) StopReceiveServer() {
 	s.serverService.StopReceiveServer()
+}
+
+func (s *ServiceContext) GetConfigOrDefault(key, defaultVal string) string {
+	return s.configService.GetOrDefault(key, defaultVal)
 }
