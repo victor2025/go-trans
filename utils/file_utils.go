@@ -2,8 +2,10 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 func Exists(path string) bool {
@@ -20,6 +22,18 @@ func IsDir(path string) bool {
 		return false
 	}
 	return s.IsDir()
+}
+
+func CreateBaseDirForFile(filePath string) error {
+	dir := filepath.Dir(filePath)
+	if Exists(dir) && !IsDir(dir) {
+		return fmt.Errorf("%s is not a directory", filePath)
+	}
+	return CreateDirs(dir)
+}
+
+func CreateDirs(path string) error {
+	return os.MkdirAll(path, os.ModePerm)
 }
 
 func LoadJsonFile(path string, v *map[string]any) error {

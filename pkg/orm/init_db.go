@@ -1,0 +1,42 @@
+package orm
+
+import (
+	"go-trans/context"
+	"go-trans/pkg/orm/models"
+	"go-trans/utils"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"log"
+)
+
+/**
+  @author: victor2022
+  @since: 2025/1/12
+*/
+func GetDb(location string) *gorm.DB {
+	if len(location) == 0 {
+		location = context.GetServiceContext().GetConfigOrDefault("orm.db.location", "./res/db/dev.db")
+	}
+	err := utils.CreateBaseDirForFile(location)
+	utils.HandleError(err)
+	db, err := gorm.Open(sqlite.Open(location), &gorm.Config{})
+	utils.HandleError(err, utils.ExitOnErr)
+	log.Printf("Create db success, location:%s\n", location)
+
+	// 初始化表
+	initTables(db)
+	return db
+}
+
+func initTables(db *gorm.DB) {
+	sendTaskInfoModel := &models.SendTaskInfo{}
+	if !db.Migrator().HasTable(sendTaskInfoModel) {
+		err := db.AutoMigrate(sendTaskInfoModel)
+		utils.HandleError(err, utils.ExitOnErr)
+	}
+	receiveTaskInfoModel := &models.ReceiveTaskInfo{}
+	if !db.Migrator().HasTable(receiveTaskInfoModel) {
+		err := db.AutoMigrate(receiveTaskInfoModel)
+		utils.HandleError(err, utils.ExitOnErr)
+	}
+}
