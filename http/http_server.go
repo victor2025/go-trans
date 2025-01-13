@@ -13,7 +13,7 @@ import (
 */
 func StartHttpServer() {
 	engine := initGinEngine()
-	serverPort := context.GetServiceContext().GetConfigOrDefault("http.server.port", "8080")
+	serverPort := context.GetServiceContext().ConfigService.GetOrDefault("http.server.port", "8080")
 	// 读取配置
 	err := engine.Run(":" + serverPort)
 	utils.HandleError(err, utils.ExitOnErr)

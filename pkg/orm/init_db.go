@@ -1,7 +1,6 @@
 package orm
 
 import (
-	"go-trans/context"
 	"go-trans/pkg/orm/models"
 	"go-trans/utils"
 	"gorm.io/driver/sqlite"
@@ -14,9 +13,6 @@ import (
   @since: 2025/1/12
 */
 func GetDb(location string) *gorm.DB {
-	if len(location) == 0 {
-		location = context.GetServiceContext().GetConfigOrDefault("orm.db.location", "./res/db/dev.db")
-	}
 	err := utils.CreateBaseDirForFile(location)
 	utils.HandleError(err)
 	db, err := gorm.Open(sqlite.Open(location), &gorm.Config{})

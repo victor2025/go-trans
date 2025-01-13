@@ -2,8 +2,10 @@ package test
 
 import (
 	"fmt"
+	"go-trans/context"
 	"go-trans/pkg/orm"
 	"go-trans/pkg/orm/models"
+	"go-trans/utils"
 	"testing"
 	"time"
 )
@@ -38,11 +40,17 @@ func TestDDL(t *testing.T) {
 }
 
 func TestCreateSendTaskInfo(t *testing.T) {
-	db := orm.GetDb("../res/db/dev.db")
-	info, _ := models.GetNewSendTaskInfo("../bin", "001")
-	fmt.Println(info)
-	db.Save(info)
+	db := context.GetServiceContext().DB
+	err := context.GetServiceContext().TaskService.CreateSendTask("../bin", "002")
+	utils.HandleError(err)
+
 	result := &models.SendTaskInfo{}
-	db.First(result, "task_id = ?", info.TaskId)
+	db.First(result, 1)
+	fmt.Println(result)
+
+	result.Progress = 0.1
+	context.GetServiceContext().TaskService.UpdateSendTask(result)
+	result = &models.SendTaskInfo{}
+	db.First(result, 1)
 	fmt.Println(result)
 }
