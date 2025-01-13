@@ -43,7 +43,10 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 		if value, ok := currResult[part].(map[string]interface{}); ok {
 			currResult = value
 		} else if idx == len(parts)-1 {
-			config = currResult[part].(string)
+			finalVal := currResult[part]
+			if finalVal != nil {
+				config = finalVal.(string)
+			}
 		}
 	}
 	return config

@@ -36,3 +36,13 @@ func TestDDL(t *testing.T) {
 	db.First(sendTaskInfo, "task_id = ?", "002")
 	fmt.Println(sendTaskInfo)
 }
+
+func TestCreateSendTaskInfo(t *testing.T) {
+	db := orm.GetDb("../res/db/dev.db")
+	info, _ := models.GetNewSendTaskInfo("../bin", "001")
+	fmt.Println(info)
+	db.Save(info)
+	result := &models.SendTaskInfo{}
+	db.First(result, "task_id = ?", info.TaskId)
+	fmt.Println(result)
+}
