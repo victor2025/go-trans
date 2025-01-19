@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-trans/context"
 	"go-trans/http/api/system"
+	"go-trans/http/api/task"
 	"go-trans/utils"
 )
 
@@ -25,5 +26,8 @@ func initGinEngine() *gin.Engine {
 	systemApi := engine.Group("/system")
 	system.RegisterRouter(systemApi)
 
+	// task
+	taskApi := engine.Group("/task")
+	task.RegisterRouter(taskApi)
 	return engine
 }
