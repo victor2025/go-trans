@@ -11,7 +11,7 @@ import (
   @since: 2025/1/5
 */
 const (
-	baseConfigPath = "./config/config.json"
+	baseConfigPath = "./res/config/config.json"
 )
 
 type ConfigService struct {

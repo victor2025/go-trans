@@ -8,6 +8,7 @@ import (
 	"go-trans/services"
 	"go-trans/utils"
 	"gorm.io/gorm"
+	"log"
 	"sync"
 )
 
@@ -63,23 +64,22 @@ func (s *ServiceContext) StopReceiveServer() {
 }
 
 func (s *ServiceContext) startSendTaskProcessor() {
-	once.Do(func() {
-		taskService := s.TaskService
-		// 启动processor
-		processor := services.NewSendTaskProcessor(func() ([]*dto.SendTaskDto, error) {
-			return taskService.GetSendTaskDtos(1, 10, "")
-		}, func(info *dto.SendTaskDto) {
-			err := serviceContext.BusService.PostMsg(info)
-			utils.HandleError(err)
-		})
+	taskService := s.TaskService
+	// 启动processor
+	processor := services.NewSendTaskProcessor(taskService, func() ([]*dto.SendTaskDto, error) {
+		return taskService.GetSendTaskDtos(1, 10, "")
+	}, func(info *dto.SendTaskDto) {
+		err := serviceContext.BusService.PostMsg(info)
+		utils.HandleError(err)
+	})
 
-		go processor.Start()
+	go processor.Start()
 
-		// 注册消息监听
-		serviceContext.BusService.RegisterHandler("sendStatusMsgHandler", func(ctx goContext.Context, e bus.Event) {
-			taskDto := e.Data.(*dto.SendTaskDto)
-			err := taskService.UpdateSendTask(taskDto.Task)
-			utils.HandleError(err)
-		})
+	// 注册消息监听
+	serviceContext.BusService.RegisterHandler("sendStatusMsgHandler", func(ctx goContext.Context, e bus.Event) {
+		log.Printf("receive msg id: %v", e.ID)
+		taskDto := e.Data.(*dto.SendTaskDto)
+		err := taskService.UpdateSendTask(taskDto.Task)
+		utils.HandleError(err)
 	})
 }

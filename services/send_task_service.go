@@ -1,6 +1,7 @@
 package services
 
 import (
+	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
 	transHandler "go-trans/pkg/transmit/handlers"
@@ -49,7 +50,7 @@ func (s *SendTaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-	log.Printf("update send task success, taskId: %s", info.TaskId)
+	log.Printf("update send task success, taskId: %s, status: %v", info.TaskId, info.Status)
 	return nil
 }
 
@@ -66,13 +67,20 @@ func (s *SendTaskService) GetSendTasks(page, size int, order string) ([]*entity.
 
 // GetSendTaskDtos 取发送任务
 func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.SendTaskDto, error) {
-	tasks, err := s.GetSendTasks(page, size, order)
-	utils.HandleError(err, utils.PanicOnError)
-	result := make([]*dto.SendTaskDto, len(tasks))
+	if order == "" {
+		order = "id ASC"
+	}
+	offset := (page - 1) * size
+	var tasks []*entity.SendTaskInfo
+	tx := s.db.Where("status = ?", consts.Waiting).Order(order).Offset(offset).Limit(size).Find(&tasks)
+	utils.HandleError(tx.Error, utils.PanicOnError)
+	result := make([]*dto.SendTaskDto, 0)
 	for _, task := range tasks {
 		var deviceInfo *entity.DeviceInfo
-		s.db.Find(&deviceInfo, "device_id = ?", task.ReceiverId)
-		if deviceInfo == nil {
+		tx := s.db.Find(&deviceInfo, "device_id = ? AND connected = ?", task.ReceiverId, true)
+		if tx.RowsAffected == 0 || deviceInfo == nil {
+			task.Status = consts.Fail
+			s.UpdateSendTask(task)
 			continue
 		}
 		result = append(result, &dto.SendTaskDto{
@@ -85,15 +93,17 @@ func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.
 
 // SendTaskProcessor 发送任务处理器
 type SendTaskProcessor struct {
-	isOn         bool
-	scanFunc     func() ([]*dto.SendTaskDto, error)
-	callbackFunc func(*dto.SendTaskDto)
+	isOn            bool
+	scanFunc        func() ([]*dto.SendTaskDto, error)
+	callbackFunc    func(*dto.SendTaskDto)
+	SendTaskService *SendTaskService
 }
 
-func NewSendTaskProcessor(scanFunc func() ([]*dto.SendTaskDto, error), callbackFunc func(info *dto.SendTaskDto)) SendTaskProcessor {
+func NewSendTaskProcessor(sendTaskService *SendTaskService, scanFunc func() ([]*dto.SendTaskDto, error), callbackFunc func(info *dto.SendTaskDto)) SendTaskProcessor {
 	return SendTaskProcessor{
-		scanFunc:     scanFunc,
-		callbackFunc: callbackFunc,
+		scanFunc:        scanFunc,
+		callbackFunc:    callbackFunc,
+		SendTaskService: sendTaskService,
 	}
 }
 
@@ -101,7 +111,7 @@ func (s *SendTaskProcessor) Start() {
 	// 创建一个时间间隔为 200ms 的 ticker
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop() // 确保在退出时停止 ticker
-
+	s.isOn = true
 	for range ticker.C {
 		if !s.isOn {
 			break
@@ -113,6 +123,8 @@ func (s *SendTaskProcessor) Start() {
 		}
 		for _, task := range tasks {
 			log.Printf("start to process send task %+v", task)
+			task.Task.Status = consts.Processing
+			s.SendTaskService.UpdateSendTask(task.Task)
 			s.startSendTask(task)
 		}
 	}
@@ -128,5 +140,6 @@ func (s *SendTaskProcessor) scanSendTasks() ([]*dto.SendTaskDto, error) {
 }
 
 func (s *SendTaskProcessor) startSendTask(task *dto.SendTaskDto) {
-	transHandler.NewSendHandler(task, s.callbackFunc)
+	handler := transHandler.NewSendHandler(task, s.callbackFunc)
+	go handler.Handle()
 }

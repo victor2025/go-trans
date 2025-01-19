@@ -45,14 +45,17 @@ func NewSendHandler(sendTaskDto *dto.SendTaskDto, callback func(*dto.SendTaskDto
 func (s *SendHandler) Handle() {
 	log.Printf("--- Send mode ---")
 
-	// connect to server
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", s.addr, s.port))
-	utils.HandleError(err, utils.ExitOnErr)
-	defer conn.Close()
-	log.Printf("Connected to %s:%s", s.addr, s.port)
-
 	// 启动callback
 	go s.invokeCallback()
+
+	// connect to server
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", s.addr, s.port))
+	utils.HandleError(err, func(args ...interface{}) {
+		s.markTaskFail()
+		panic(args[0])
+	})
+	defer conn.Close()
+	log.Printf("Connected to %s:%s", s.addr, s.port)
 
 	// send local file or dir
 	start := time.Now()
@@ -208,4 +211,9 @@ func (s *SendHandler) updateTask(progress float32) {
 	} else {
 		s.sendTaskDto.Task.Status = consts.Processing
 	}
+}
+
+func (s *SendHandler) markTaskFail() {
+	s.sendTaskDto.Task.Status = consts.Fail
+	s.isDone = true
 }
