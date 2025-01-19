@@ -17,6 +17,7 @@ type ServiceContext struct {
 	ConfigService *services.ConfigService
 	TaskService   *services.TaskService
 	DB            *gorm.DB
+	BusService    *services.BusService
 }
 
 var serviceContext *ServiceContext
@@ -28,10 +29,14 @@ func GetServiceContext() *ServiceContext {
 		configService := services.NewConfigService()
 		dbLocation := configService.GetOrDefault("orm.db.location", "./res/db/dev.db")
 		DB := orm.GetDb(dbLocation)
+
+		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
+
 		serviceContext = &ServiceContext{
 			ServerService: services.NewServerService(),
 			ConfigService: configService,
 			TaskService:   services.NewTaskService(DB),
+			BusService:    services.NewBusService(busTopic),
 			DB:            DB,
 		}
 	})
