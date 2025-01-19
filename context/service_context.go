@@ -26,10 +26,12 @@ var once = sync.Once{}
 // GetServiceContext 获取系统上下文
 func GetServiceContext() *ServiceContext {
 	once.Do(func() {
+		// 配置服务
 		configService := services.NewConfigService()
+		// 持久层配置
 		dbLocation := configService.GetOrDefault("orm.db.location", "./res/db/dev.db")
 		DB := orm.GetDb(dbLocation)
-
+		// 总线配置
 		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
 
 		serviceContext = &ServiceContext{
