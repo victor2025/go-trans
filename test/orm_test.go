@@ -3,8 +3,8 @@ package test
 import (
 	"fmt"
 	"go-trans/context"
+	"go-trans/pkg/models/entity"
 	"go-trans/pkg/orm"
-	"go-trans/pkg/orm/models"
 	"go-trans/utils"
 	"testing"
 	"time"
@@ -17,9 +17,9 @@ import (
 
 func TestDDL(t *testing.T) {
 	db := orm.GetDb("../res/db/dev.db")
-	db.Create(&models.SendTaskInfo{
-		BaseTaskInfo: models.BaseTaskInfo{
-			BaseModel: models.BaseModel{
+	db.Create(&entity.SendTaskInfo{
+		BaseTaskInfo: &entity.BaseTaskInfo{
+			BaseModel: &entity.BaseModel{
 				GmtCreate: time.Now(),
 				GmtModify: time.Now(),
 			},
@@ -29,7 +29,7 @@ func TestDDL(t *testing.T) {
 		},
 		ReceiverId: "0",
 	})
-	sendTaskInfo := &models.SendTaskInfo{}
+	sendTaskInfo := &entity.SendTaskInfo{}
 	db.First(sendTaskInfo, "task_id = ?", "002")
 	fmt.Println(sendTaskInfo)
 
@@ -44,13 +44,13 @@ func TestCreateSendTaskInfo(t *testing.T) {
 	err := context.GetServiceContext().TaskService.CreateSendTask("../bin", "002")
 	utils.HandleError(err)
 
-	result := &models.SendTaskInfo{}
+	result := &entity.SendTaskInfo{}
 	db.First(result, 1)
 	fmt.Println(result)
 
 	result.Progress = 0.1
 	context.GetServiceContext().TaskService.UpdateSendTask(result)
-	result = &models.SendTaskInfo{}
+	result = &entity.SendTaskInfo{}
 	db.First(result, 1)
 	fmt.Println(result)
 }

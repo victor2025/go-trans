@@ -1,4 +1,4 @@
-package models
+package entity
 
 import "time"
 
@@ -10,4 +10,11 @@ type BaseModel struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	GmtCreate time.Time `json:"gmt_create"`
 	GmtModify time.Time `json:"gmt_modify"`
+}
+
+func GetNewBaseModel() *BaseModel {
+	return &BaseModel{
+		GmtCreate: time.Now(),
+		GmtModify: time.Now(),
+	}
 }

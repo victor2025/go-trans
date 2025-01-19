@@ -31,7 +31,7 @@ func pageSendTasks(c *gin.Context) {
 	size := c.Param("size")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize, _ := strconv.Atoi(size)
-	tasks, err := context.GetServiceContext().TaskService.GetTasks(pageInt, pageSize, "id DESC")
+	tasks, err := context.GetServiceContext().TaskService.GetSendTasks(pageInt, pageSize, "id DESC")
 	utils.HandleError(err, func() {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())

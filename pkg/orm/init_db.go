@@ -1,7 +1,7 @@
 package orm
 
 import (
-	"go-trans/pkg/orm/models"
+	"go-trans/pkg/models/entity"
 	"go-trans/utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -25,14 +25,20 @@ func GetDb(location string) *gorm.DB {
 }
 
 func initTables(db *gorm.DB) {
-	sendTaskInfoModel := &models.SendTaskInfo{}
+	sendTaskInfoModel := &entity.SendTaskInfo{}
 	if !db.Migrator().HasTable(sendTaskInfoModel) {
 		err := db.AutoMigrate(sendTaskInfoModel)
 		utils.HandleError(err, utils.ExitOnErr)
 	}
-	receiveTaskInfoModel := &models.ReceiveTaskInfo{}
+	receiveTaskInfoModel := &entity.ReceiveTaskInfo{}
 	if !db.Migrator().HasTable(receiveTaskInfoModel) {
 		err := db.AutoMigrate(receiveTaskInfoModel)
+		utils.HandleError(err, utils.ExitOnErr)
+	}
+
+	deviceInfoModel := &entity.DeviceInfo{}
+	if !db.Migrator().HasTable(deviceInfoModel) {
+		err := db.AutoMigrate(deviceInfoModel)
 		utils.HandleError(err, utils.ExitOnErr)
 	}
 }
