@@ -6,6 +6,7 @@ import (
 	"go-trans/http/response"
 	"go-trans/utils"
 	"log"
+	"strconv"
 )
 
 /**
@@ -23,4 +24,17 @@ func createSendTask(c *gin.Context) {
 		panic(err.Error())
 	})
 	response.NewSuccessResponse(c, "success")
+}
+
+func pageSendTasks(c *gin.Context) {
+	page := c.Param("page")
+	size := c.Param("size")
+	pageInt, _ := strconv.Atoi(page)
+	pageSize, _ := strconv.Atoi(size)
+	tasks, err := context.GetServiceContext().TaskService.GetTasks(pageInt, pageSize, "id DESC")
+	utils.HandleError(err, func() {
+		response.NewFailResponse(c, "", err.Error())
+		panic(err.Error())
+	})
+	response.NewSuccessResponse(c, tasks)
 }

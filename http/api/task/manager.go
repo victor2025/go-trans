@@ -8,4 +8,5 @@ import "github.com/gin-gonic/gin"
 */
 func RegisterRouter(router *gin.RouterGroup) {
 	router.POST("/createSendTask", createSendTask)
+	router.GET("/pageSendTasks/:page/:size", pageSendTasks)
 }
