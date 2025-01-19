@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	ExitOnErr      = func() { os.Exit(1) }
-	DoNothingOnErr = func() {}
+	ExitOnErr      = func(args ...interface{}) { os.Exit(1) }
+	DoNothingOnErr = func(args ...interface{}) { os.Exit(1) }
 	PanicOnError   = func(args ...interface{}) { log.Panic(args[0]) }
 )
 

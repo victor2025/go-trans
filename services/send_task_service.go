@@ -3,28 +3,34 @@ package services
 import (
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
+	transHandler "go-trans/pkg/transmit/handlers"
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"log"
+	"sync"
+	"time"
 )
 
 /**
   @author: victor2022
   @since: 2025/1/13
 */
+var once sync.Once
 
-type TaskService struct {
+type SendTaskService struct {
 	db *gorm.DB
 }
 
-func NewTaskService(db *gorm.DB) *TaskService {
-	return &TaskService{
+func NewTaskService(db *gorm.DB) *SendTaskService {
+	taskService := &SendTaskService{
 		db: db,
 	}
+
+	return taskService
 }
 
 // CreateSendTask 创建发送任务
-func (s *TaskService) CreateSendTask(path, receiverId string) error {
+func (s *SendTaskService) CreateSendTask(path, receiverId string) error {
 	taskInfo, err := entity.GetNewSendTaskInfo(path, receiverId)
 	if err != nil {
 		return err
@@ -38,7 +44,7 @@ func (s *TaskService) CreateSendTask(path, receiverId string) error {
 }
 
 // UpdateSendTask 更新任务
-func (s *TaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
+func (s *SendTaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
 	tx := s.db.Save(info)
 	if tx.Error != nil {
 		return tx.Error
@@ -48,7 +54,7 @@ func (s *TaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
 }
 
 // GetSendTasks 按页查询任务列表
-func (s *TaskService) GetSendTasks(page, size int, order string) ([]*entity.SendTaskInfo, error) {
+func (s *SendTaskService) GetSendTasks(page, size int, order string) ([]*entity.SendTaskInfo, error) {
 	if order == "" {
 		order = "id ASC"
 	}
@@ -59,7 +65,7 @@ func (s *TaskService) GetSendTasks(page, size int, order string) ([]*entity.Send
 }
 
 // GetSendTaskDtos 取发送任务
-func (s *TaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.SendTaskDto, error) {
+func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.SendTaskDto, error) {
 	tasks, err := s.GetSendTasks(page, size, order)
 	utils.HandleError(err, utils.PanicOnError)
 	result := make([]*dto.SendTaskDto, len(tasks))
@@ -75,4 +81,52 @@ func (s *TaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.Send
 		})
 	}
 	return result, nil
+}
+
+// SendTaskProcessor 发送任务处理器
+type SendTaskProcessor struct {
+	isOn         bool
+	scanFunc     func() ([]*dto.SendTaskDto, error)
+	callbackFunc func(*dto.SendTaskDto)
+}
+
+func NewSendTaskProcessor(scanFunc func() ([]*dto.SendTaskDto, error), callbackFunc func(info *dto.SendTaskDto)) SendTaskProcessor {
+	return SendTaskProcessor{
+		scanFunc:     scanFunc,
+		callbackFunc: callbackFunc,
+	}
+}
+
+func (s *SendTaskProcessor) Start() {
+	// 创建一个时间间隔为 200ms 的 ticker
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop() // 确保在退出时停止 ticker
+
+	for range ticker.C {
+		if !s.isOn {
+			break
+		}
+		tasks, err := s.scanSendTasks()
+		utils.HandleError(err)
+		if tasks == nil || len(tasks) == 0 {
+			continue
+		}
+		for _, task := range tasks {
+			log.Printf("start to process send task %+v", task)
+			s.startSendTask(task)
+		}
+	}
+	log.Println("stop send task processor by signal")
+}
+
+func (s *SendTaskProcessor) Stop() {
+	s.isOn = false
+}
+
+func (s *SendTaskProcessor) scanSendTasks() ([]*dto.SendTaskDto, error) {
+	return s.scanFunc()
+}
+
+func (s *SendTaskProcessor) startSendTask(task *dto.SendTaskDto) {
+	transHandler.NewSendHandler(task, s.callbackFunc)
 }

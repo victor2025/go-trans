@@ -4,6 +4,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"go-trans/pkg/models/consts"
+	"go-trans/pkg/models/dto"
 	"go-trans/pkg/transmit/protocols"
 	"go-trans/utils"
 	"io"
@@ -21,14 +23,22 @@ type SendHandler struct {
 	path      string
 	baseDir   string
 	sliceSize uint16
+	isSendDir bool
+	isDone    bool
+	// dto存档
+	sendTaskDto dto.SendTaskDto
+	// 回调
+	callback func(*dto.SendTaskDto)
 }
 
-func NewSendHandler(addr, port, path string) *SendHandler {
+func NewSendHandler(sendTaskDto *dto.SendTaskDto, callback func(*dto.SendTaskDto)) *SendHandler {
 	return &SendHandler{
-		addr:      addr,
-		port:      port,
-		path:      path,
-		sliceSize: 1024 * 4, // max 2^16-1
+		addr:        sendTaskDto.Device.Address,
+		port:        sendTaskDto.Device.Port,
+		path:        sendTaskDto.Task.FilePath,
+		sendTaskDto: *sendTaskDto,
+		callback:    callback,
+		sliceSize:   1024 * 4, // max 2^16-1
 	}
 }
 
@@ -41,6 +51,9 @@ func (s *SendHandler) Handle() {
 	defer conn.Close()
 	log.Printf("Connected to %s:%s", s.addr, s.port)
 
+	// 启动callback
+	go s.invokeCallback()
+
 	// send local file or dir
 	start := time.Now()
 	totalSize := int64(0)
@@ -48,11 +61,13 @@ func (s *SendHandler) Handle() {
 	var fileOrDirName string
 	s.baseDir, fileOrDirName = filepath.Split(absPath)
 	if utils.IsDir(absPath) {
+		s.isSendDir = true
 		// send the whole dir
 		dataSize, err := s.walkAndSendDir(conn, absPath, fileOrDirName)
 		utils.HandleError(err, utils.DoNothingOnErr)
 		totalSize += dataSize
 	} else {
+		s.isSendDir = false
 		// send single file
 		totalSize, err = s.sendFile(conn, fileOrDirName)
 	}
@@ -65,6 +80,10 @@ func (s *SendHandler) Handle() {
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := sizeInKBytes / (dur / 1000)
 	log.Printf("--- Info: send file complete, total size: %.2fKB, total time: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
+
+	// 结束任务
+	s.updateTask(1)
+	s.isDone = true
 }
 
 // 遍历文件夹并发送文件
@@ -140,7 +159,11 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 		// show status
 		seq++
 		dataSize += n
-		log.Printf("seq: %v, sent %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
+		progress := float32(dataSize) / float32(fileSize)
+		log.Printf("seq: %v, sent %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*progress)
+
+		// update status
+		s.updateTask(progress)
 
 		// is end
 		if n < int(s.sliceSize) {
@@ -163,4 +186,26 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	log.Printf("Info: cost time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
 
 	return fileSize, nil
+}
+
+func (s *SendHandler) invokeCallback() {
+	// 创建一个时间间隔为 200ms 的 ticker
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop() // 确保在退出时停止 ticker
+	for range ticker.C {
+		s.callback(&s.sendTaskDto)
+		if s.isDone {
+			break
+		}
+	}
+	log.Println("send handler callback done")
+}
+
+func (s *SendHandler) updateTask(progress float32) {
+	s.sendTaskDto.Task.Progress = progress
+	if progress >= 1 {
+		s.sendTaskDto.Task.Status = consts.Finished
+	} else {
+		s.sendTaskDto.Task.Status = consts.Processing
+	}
 }

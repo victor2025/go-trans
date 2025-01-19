@@ -18,7 +18,7 @@ func createSendTask(c *gin.Context) {
 	path := c.DefaultQuery("path", "")
 	receiver := c.DefaultQuery("receiver", "")
 	err := context.GetServiceContext().TaskService.CreateSendTask(path, receiver)
-	utils.HandleError(err, func() {
+	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		log.Printf("createSendTask err, errMsg: %s\n", err.Error())
 		panic(err.Error())
@@ -32,7 +32,7 @@ func pageSendTasks(c *gin.Context) {
 	pageInt, _ := strconv.Atoi(page)
 	pageSize, _ := strconv.Atoi(size)
 	tasks, err := context.GetServiceContext().TaskService.GetSendTasks(pageInt, pageSize, "id DESC")
-	utils.HandleError(err, func() {
+	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())
 	})

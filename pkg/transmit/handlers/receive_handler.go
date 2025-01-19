@@ -51,7 +51,7 @@ func (s *ReceiveHandler) Handle() {
 			break
 		}
 		// handle error
-		utils.HandleError(err, func() { isNormal = false })
+		utils.HandleError(err, func(args ...interface{}) { isNormal = false })
 		if !isNormal {
 			continue
 		}

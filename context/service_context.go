@@ -1,8 +1,12 @@
 package context
 
 import (
+	goContext "context"
+	"github.com/mustafaturan/bus/v3"
+	"go-trans/pkg/models/dto"
 	"go-trans/pkg/orm"
 	"go-trans/services"
+	"go-trans/utils"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -15,7 +19,7 @@ import (
 type ServiceContext struct {
 	ServerService *services.TransmitService
 	ConfigService *services.ConfigService
-	TaskService   *services.TaskService
+	TaskService   *services.SendTaskService
 	DB            *gorm.DB
 	BusService    *services.BusService
 }
@@ -41,6 +45,9 @@ func GetServiceContext() *ServiceContext {
 			BusService:    services.NewBusService(busTopic),
 			DB:            DB,
 		}
+
+		// 启动发送任务处理器
+		serviceContext.startSendTaskProcessor()
 	})
 	return serviceContext
 }
@@ -53,4 +60,26 @@ func (s *ServiceContext) StartReceiveServer() {
 
 func (s *ServiceContext) StopReceiveServer() {
 	s.ServerService.StopReceiveServer()
+}
+
+func (s *ServiceContext) startSendTaskProcessor() {
+	once.Do(func() {
+		taskService := s.TaskService
+		// 启动processor
+		processor := services.NewSendTaskProcessor(func() ([]*dto.SendTaskDto, error) {
+			return taskService.GetSendTaskDtos(1, 10, "")
+		}, func(info *dto.SendTaskDto) {
+			err := serviceContext.BusService.PostMsg(info)
+			utils.HandleError(err)
+		})
+
+		go processor.Start()
+
+		// 注册消息监听
+		serviceContext.BusService.RegisterHandler("sendStatusMsgHandler", func(ctx goContext.Context, e bus.Event) {
+			taskDto := e.Data.(*dto.SendTaskDto)
+			err := taskService.UpdateSendTask(taskDto.Task)
+			utils.HandleError(err)
+		})
+	})
 }

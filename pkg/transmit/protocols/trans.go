@@ -95,7 +95,7 @@ func ReceiveNextTrans(conn net.Conn) (*TRANS, error) {
 	// read content
 	content := make([]byte, head.TotalSize-headSize)
 	_, err = io.ReadFull(conn, content)
-	utils.HandleError(err, func() {})
+	utils.HandleError(err)
 	return &TRANS{
 		Head:    head,
 		Content: content,
