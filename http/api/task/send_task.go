@@ -2,8 +2,8 @@ package task
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-trans/context"
 	"go-trans/http/response"
+	"go-trans/services"
 	"go-trans/utils"
 	"log"
 	"strconv"
@@ -17,7 +17,7 @@ import (
 func createSendTask(c *gin.Context) {
 	path := c.DefaultQuery("path", "")
 	receiver := c.DefaultQuery("receiver", "")
-	err := context.GetServiceContext().TaskService.CreateSendTask(path, receiver)
+	err := services.GetServiceContext().TaskService.CreateSendTask(path, receiver)
 	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		log.Printf("createSendTask err, errMsg: %s\n", err.Error())
@@ -31,7 +31,7 @@ func pageSendTasks(c *gin.Context) {
 	size := c.Param("size")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize, _ := strconv.Atoi(size)
-	tasks, err := context.GetServiceContext().TaskService.GetSendTasks(pageInt, pageSize, "id DESC")
+	tasks, err := services.GetServiceContext().TaskService.GetSendTasks(pageInt, pageSize, "id DESC")
 	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())

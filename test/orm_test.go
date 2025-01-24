@@ -2,9 +2,9 @@ package test
 
 import (
 	"fmt"
-	"go-trans/context"
 	"go-trans/pkg/models/entity"
 	"go-trans/pkg/orm"
+	"go-trans/services"
 	"go-trans/utils"
 	"testing"
 	"time"
@@ -52,8 +52,8 @@ func TestCreateDevice(t *testing.T) {
 }
 
 func TestCreateSendTaskInfo(t *testing.T) {
-	db := context.GetServiceContext().DB
-	err := context.GetServiceContext().TaskService.CreateSendTask("../bin", "002")
+	db := services.GetServiceContext().DB
+	err := services.GetServiceContext().TaskService.CreateSendTask("../bin", "002")
 	utils.HandleError(err)
 
 	result := &entity.SendTaskInfo{}
@@ -61,7 +61,7 @@ func TestCreateSendTaskInfo(t *testing.T) {
 	fmt.Println(result)
 
 	result.Progress = 0.1
-	context.GetServiceContext().TaskService.UpdateSendTask(result)
+	services.GetServiceContext().TaskService.UpdateSendTask(result)
 	result = &entity.SendTaskInfo{}
 	db.First(result, 1)
 	fmt.Println(result)

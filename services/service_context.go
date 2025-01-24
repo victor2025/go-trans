@@ -1,11 +1,10 @@
-package context
+package services
 
 import (
 	goContext "context"
 	"github.com/mustafaturan/bus/v3"
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/orm"
-	"go-trans/services"
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"log"
@@ -18,11 +17,11 @@ import (
 */
 
 type ServiceContext struct {
-	ServerService *services.TransmitService
-	ConfigService *services.ConfigService
-	TaskService   *services.SendTaskService
+	ServerService *TransmitService
+	ConfigService *ConfigService
+	TaskService   *SendTaskService
 	DB            *gorm.DB
-	BusService    *services.BusService
+	BusService    *BusService
 }
 
 var serviceContext *ServiceContext
@@ -32,7 +31,7 @@ var once = sync.Once{}
 func GetServiceContext() *ServiceContext {
 	once.Do(func() {
 		// 配置服务
-		configService := services.NewConfigService()
+		configService := NewConfigService()
 		// 持久层配置
 		dbLocation := configService.GetOrDefault("orm.db.location", "./res/db/dev.db")
 		DB := orm.GetDb(dbLocation)
@@ -40,10 +39,10 @@ func GetServiceContext() *ServiceContext {
 		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
 
 		serviceContext = &ServiceContext{
-			ServerService: services.NewServerService(),
+			ServerService: NewServerService(),
 			ConfigService: configService,
-			TaskService:   services.NewTaskService(DB),
-			BusService:    services.NewBusService(busTopic),
+			TaskService:   NewTaskService(DB),
+			BusService:    NewBusService(busTopic),
 			DB:            DB,
 		}
 
@@ -66,7 +65,7 @@ func (s *ServiceContext) StopReceiveServer() {
 func (s *ServiceContext) startSendTaskProcessor() {
 	taskService := s.TaskService
 	// 启动processor
-	processor := services.NewSendTaskProcessor(taskService, func() ([]*dto.SendTaskDto, error) {
+	processor := NewSendTaskProcessor(taskService, func() ([]*dto.SendTaskDto, error) {
 		return taskService.GetSendTaskDtos(1, 10, "")
 	}, func(info *dto.SendTaskDto) {
 		err := serviceContext.BusService.PostMsg(info)

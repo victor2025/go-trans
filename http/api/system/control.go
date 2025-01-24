@@ -2,8 +2,8 @@ package system
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-trans/context"
 	"go-trans/http/response"
+	"go-trans/services"
 )
 
 /**
@@ -17,11 +17,11 @@ func RegisterRouter(router *gin.RouterGroup) {
 }
 
 func startTransmitServer(c *gin.Context) {
-	context.GetServiceContext().StartReceiveServer()
+	services.GetServiceContext().StartReceiveServer()
 	response.NewSuccessResponse(c, "start success")
 }
 
 func stopTransmitServer(c *gin.Context) {
-	context.GetServiceContext().StopReceiveServer()
+	services.GetServiceContext().StopReceiveServer()
 	response.NewSuccessResponse(c, "stop success")
 }

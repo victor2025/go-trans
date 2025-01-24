@@ -8,7 +8,6 @@ import (
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"log"
-	"sync"
 	"time"
 )
 
@@ -16,8 +15,6 @@ import (
   @author: victor2022
   @since: 2025/1/13
 */
-var once sync.Once
-
 type SendTaskService struct {
 	db *gorm.DB
 }
