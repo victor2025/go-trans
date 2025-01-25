@@ -25,20 +25,16 @@ func GetDb(location string) *gorm.DB {
 }
 
 func initTables(db *gorm.DB) {
+	// 发送任务
 	sendTaskInfoModel := &entity.SendTaskInfo{}
-	if !db.Migrator().HasTable(sendTaskInfoModel) {
-		err := db.AutoMigrate(sendTaskInfoModel)
-		utils.HandleError(err, utils.ExitOnErr)
-	}
+	err := db.AutoMigrate(sendTaskInfoModel)
+	utils.HandleError(err, utils.ExitOnErr)
+	// 接收任务
 	receiveTaskInfoModel := &entity.ReceiveTaskInfo{}
-	if !db.Migrator().HasTable(receiveTaskInfoModel) {
-		err := db.AutoMigrate(receiveTaskInfoModel)
-		utils.HandleError(err, utils.ExitOnErr)
-	}
-
+	err = db.AutoMigrate(receiveTaskInfoModel)
+	utils.HandleError(err, utils.ExitOnErr)
+	// 设备信息
 	deviceInfoModel := &entity.DeviceInfo{}
-	if !db.Migrator().HasTable(deviceInfoModel) {
-		err := db.AutoMigrate(deviceInfoModel)
-		utils.HandleError(err, utils.ExitOnErr)
-	}
+	err = db.AutoMigrate(deviceInfoModel)
+	utils.HandleError(err, utils.ExitOnErr)
 }

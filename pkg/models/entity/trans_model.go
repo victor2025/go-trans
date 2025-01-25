@@ -18,6 +18,7 @@ type BaseTaskInfo struct {
 	FileName string          `gorm:"not null" json:"file_name"`
 	FilePath string          `gorm:"not null" json:"file_path"`
 	FileType consts.FileType `json:"type"`
+	Md5      string          `json:"md5"`
 	TaskId   string          `gorm:"unique; not null" json:"task_id"`
 	ErrorMsg string          `json:"error_msg"`
 }
