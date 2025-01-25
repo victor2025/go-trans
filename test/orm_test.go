@@ -53,7 +53,7 @@ func TestCreateDevice(t *testing.T) {
 
 func TestCreateSendTaskInfo(t *testing.T) {
 	db := services.GetServiceContext().DB
-	err := services.GetServiceContext().TaskService.CreateSendTask("../bin", "002")
+	err := services.GetServiceContext().SendTaskService.CreateSendTask("../bin", "002")
 	utils.HandleError(err)
 
 	result := &entity.SendTaskInfo{}
@@ -61,7 +61,7 @@ func TestCreateSendTaskInfo(t *testing.T) {
 	fmt.Println(result)
 
 	result.Progress = 0.1
-	services.GetServiceContext().TaskService.UpdateSendTask(result)
+	services.GetServiceContext().SendTaskService.UpdateSendTask(result)
 	result = &entity.SendTaskInfo{}
 	db.First(result, 1)
 	fmt.Println(result)

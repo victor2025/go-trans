@@ -1,13 +1,8 @@
 package services
 
 import (
-	goContext "context"
-	"github.com/mustafaturan/bus/v3"
-	"go-trans/pkg/models/dto"
 	"go-trans/pkg/orm"
-	"go-trans/utils"
 	"gorm.io/gorm"
-	"log"
 	"sync"
 )
 
@@ -17,11 +12,11 @@ import (
 */
 
 type ServiceContext struct {
-	ServerService *TransmitService
-	ConfigService *ConfigService
-	TaskService   *SendTaskService
-	DB            *gorm.DB
-	BusService    *BusService
+	ServerService   *TransmitService
+	ConfigService   *ConfigService
+	SendTaskService *SendTaskService
+	DB              *gorm.DB
+	BusService      *BusService
 }
 
 var serviceContext *ServiceContext
@@ -39,15 +34,12 @@ func GetServiceContext() *ServiceContext {
 		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
 
 		serviceContext = &ServiceContext{
-			ServerService: NewServerService(),
-			ConfigService: configService,
-			TaskService:   NewTaskService(DB),
-			BusService:    NewBusService(busTopic),
-			DB:            DB,
+			ServerService:   NewServerService(),
+			ConfigService:   configService,
+			SendTaskService: NewTaskService(DB),
+			BusService:      NewBusService(busTopic),
+			DB:              DB,
 		}
-
-		// 启动发送任务处理器
-		serviceContext.startSendTaskProcessor()
 	})
 	return serviceContext
 }
@@ -60,25 +52,4 @@ func (s *ServiceContext) StartReceiveServer() {
 
 func (s *ServiceContext) StopReceiveServer() {
 	s.ServerService.StopReceiveServer()
-}
-
-func (s *ServiceContext) startSendTaskProcessor() {
-	taskService := s.TaskService
-	// 启动processor
-	processor := NewSendTaskProcessor(taskService, func() ([]*dto.SendTaskDto, error) {
-		return taskService.GetSendTaskDtos(1, 10, "")
-	}, func(info *dto.SendTaskDto) {
-		err := serviceContext.BusService.PostMsg(info)
-		utils.HandleError(err)
-	})
-
-	go processor.Start()
-
-	// 注册消息监听
-	serviceContext.BusService.RegisterHandler("sendStatusMsgHandler", func(ctx goContext.Context, e bus.Event) {
-		log.Printf("receive msg id: %v", e.ID)
-		taskDto := e.Data.(*dto.SendTaskDto)
-		err := taskService.UpdateSendTask(taskDto.Task)
-		utils.HandleError(err)
-	})
 }

@@ -2,19 +2,18 @@ package app
 
 import (
 	"go-trans/http"
-	"log"
-	"time"
 )
 
 /**
   @author: victor2022
   @since: 2025/1/24
 */
-func Startup() {
-	// 启动httpServer
-	start := time.Now()
-	go http.StartHttpServer()
-	log.Printf("go-trans-core startup in %dms\n", time.Since(start).Microseconds())
+func Run() {
+	// 初始化系统
+	RegisterMsgConsumers()
+	RegisterProcessors()
+	// 启动http服务
+	http.StartHttpServer()
 }
 
 func Shutdown() {

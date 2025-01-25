@@ -8,6 +8,5 @@ import "go-trans/app"
 */
 
 func main() {
-
-	app.Startup()
+	app.Run()
 }

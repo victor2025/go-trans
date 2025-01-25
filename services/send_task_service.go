@@ -93,14 +93,14 @@ type SendTaskProcessor struct {
 	isOn            bool
 	scanFunc        func() ([]*dto.SendTaskDto, error)
 	callbackFunc    func(*dto.SendTaskDto)
-	SendTaskService *SendTaskService
+	sendTaskService *SendTaskService
+	busService      *BusService
 }
 
-func NewSendTaskProcessor(sendTaskService *SendTaskService, scanFunc func() ([]*dto.SendTaskDto, error), callbackFunc func(info *dto.SendTaskDto)) SendTaskProcessor {
+func NewSendTaskProcessor(sendTaskService *SendTaskService, busService *BusService) SendTaskProcessor {
 	return SendTaskProcessor{
-		scanFunc:        scanFunc,
-		callbackFunc:    callbackFunc,
-		SendTaskService: sendTaskService,
+		sendTaskService: sendTaskService,
+		busService:      busService,
 	}
 }
 
@@ -121,7 +121,8 @@ func (s *SendTaskProcessor) Start() {
 		for _, task := range tasks {
 			log.Printf("start to process send task %+v", task)
 			task.Task.Status = consts.Processing
-			s.SendTaskService.UpdateSendTask(task.Task)
+			err := s.sendTaskService.UpdateSendTask(task.Task)
+			utils.HandleError(err)
 			s.startSendTask(task)
 		}
 	}
@@ -133,10 +134,13 @@ func (s *SendTaskProcessor) Stop() {
 }
 
 func (s *SendTaskProcessor) scanSendTasks() ([]*dto.SendTaskDto, error) {
-	return s.scanFunc()
+	return s.sendTaskService.GetSendTaskDtos(1, 10, "")
 }
 
 func (s *SendTaskProcessor) startSendTask(task *dto.SendTaskDto) {
-	handler := transHandler.NewSendHandler(task, s.callbackFunc)
+	handler := transHandler.NewSendHandler(task, func(taskDto *dto.SendTaskDto) {
+		err := serviceContext.BusService.PostMsg(taskDto)
+		utils.HandleError(err)
+	})
 	go handler.Handle()
 }
