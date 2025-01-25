@@ -28,8 +28,8 @@ func main() {
 		sHandler := handlers2.NewReceiveHandler(port, output)
 		sHandler.Handle()
 	} else {
-		cHandler := handlers2.NewSendHandler(addr, port, input)
-		cHandler.Handle()
+		//cHandler := handlers2.NewSendHandler(addr, port, input)
+		//cHandler.Handle()
 	}
 }
 
