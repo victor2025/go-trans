@@ -85,7 +85,6 @@ func (s *SendHandler) Handle() {
 	log.Printf("--- Info: send file complete, total size: %.2fKB, total time: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 
 	// 结束任务
-	s.updateTask(1)
 	s.isDone = true
 }
 
@@ -166,9 +165,9 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 		log.Printf("seq: %v, sent %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*progress)
 
 		// update status
-		s.updateTask(progress)
+		s.updateTask(progress, "")
 
-		// is end
+		// is ended
 		if n < int(s.sliceSize) {
 			break
 		}
@@ -188,6 +187,9 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	log.Printf("MD5: %s", md5Val)
 	log.Printf("Info: cost time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
 
+	// 更新md5值
+	s.updateTask(1, md5Val)
+
 	return fileSize, nil
 }
 
@@ -204,8 +206,11 @@ func (s *SendHandler) invokeCallback() {
 	log.Println("send handler callback done")
 }
 
-func (s *SendHandler) updateTask(progress float32) {
+func (s *SendHandler) updateTask(progress float32, md5 string) {
 	s.sendTaskDto.Task.Progress = progress
+	if len(md5) != 0 {
+		s.sendTaskDto.Task.Md5 = md5
+	}
 	if progress >= 1 {
 		s.sendTaskDto.Task.Status = consts.Finished
 	} else {
