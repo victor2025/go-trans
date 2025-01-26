@@ -2,8 +2,6 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
 	"go-trans/http/api/system"
 	"go-trans/http/api/task"
 	"go-trans/services"
@@ -26,8 +24,6 @@ func StartHttpServer() {
 
 func initGinEngine() *gin.Engine {
 	engine := gin.Default()
-	// swagger
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// system
 	systemApi := engine.Group("/system")
 	system.RegisterRouter(systemApi)

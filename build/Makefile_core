@@ -9,7 +9,7 @@ OUTPUT = $(TARGET_PATH)/$(GOOS)-$(GOARCH)/$(TARGET_NAME)$(TARGET_SUFFIX)
 # 默认构建目标
 build:
 	# "--- Building $(TARGET_NAME) for $(GOOS)-$(GOARCH) ... ---"
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CC=$(BUILD_CC) CXX=$(BUILD_CC) CGO_ENABLED=1 go build -o $(OUTPUT) -buildmode=c-shared $(SRC_PATH)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CC=$(BUILD_CC) CXX=$(BUILD_CC) CGO_ENABLED=1 go build -ldflags "-s -w" -o $(OUTPUT) -buildmode=c-shared $(SRC_PATH)
 	# "--- Build $(TARGET_NAME) for $(GOOS)-$(GOARCH) Success !!! ---"
 clean:
 	rm -rf build/
