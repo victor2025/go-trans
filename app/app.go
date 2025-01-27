@@ -1,19 +1,17 @@
 package app
 
-import (
-	"go-trans/http"
-)
+/*
+*
 
-/**
-  @author: victor2022
-  @since: 2025/1/24
+	@author: victor2022
+	@since: 2025/1/24
 */
 func Run() {
 	// 初始化系统
 	RegisterMsgConsumers()
 	RegisterProcessors()
-	// 启动http服务
-	http.StartHttpServer()
+	// 启动服务器
+	StartupServer()
 }
 
 func Shutdown() {

@@ -5,11 +5,9 @@ import (
 	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
-	"go-trans/pkg/runner"
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"strings"
-	"time"
 )
 
 /**
@@ -81,32 +79,13 @@ func (s *DeviceService) RefreshSelfPairCode() error {
 }
 
 // DeviceScanProcessor 设备扫描处理器
-type DeviceScanProcessor struct {
-	runner.TickerRunner
+type DeviceScanner struct {
 	scanResult map[string]dto.DeviceScanInfo
-	isOn       bool
 }
 
-func NewDeviceScanProcessor() *DeviceScanProcessor {
-	processor := &DeviceScanProcessor{
-		TickerRunner: runner.TickerRunner{
-			Period: time.Second * 5,
-		},
+func NewDeviceScanner() *DeviceScanner {
+	processor := &DeviceScanner{
 		scanResult: make(map[string]dto.DeviceScanInfo),
 	}
-	processor.Runner = processor
 	return processor
-}
-func (p *DeviceScanProcessor) MarkStarted() {
-	p.isOn = true
-}
-
-func (p *DeviceScanProcessor) Handle() {
-
-}
-func (p *DeviceScanProcessor) IsOn() bool {
-	return p.isOn
-}
-func (p *DeviceScanProcessor) Stop() {
-	p.isOn = false
 }

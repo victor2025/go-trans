@@ -9,12 +9,12 @@ import (
 	"go-trans/utils"
 )
 
-/*
-*
-
-	@author: victor2022
-	@since: 2025/1/5
+/**
+@author: victor2022
+@since: 2025/1/5
 */
+
+// StartHttpServer 启动http服务器
 func StartHttpServer() {
 	engine := initGinEngine()
 	serverPort := services.GetServiceContext().ConfigService.GetOrDefault("http.server.port", "8080")
