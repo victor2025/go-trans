@@ -1,6 +1,7 @@
 package services
 
 import (
+	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/entity"
 	"go-trans/utils"
 	"gorm.io/gorm"
@@ -29,5 +30,21 @@ func (s *DeviceService) GetConnectedDeviceById(deviceId string) *entity.DeviceIn
 	if tx.RowsAffected == 0 {
 		return nil
 	}
+	return deviceInfo
+}
+
+func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
+	var deviceInfo *entity.DeviceInfo
+	tx := s.db.Find(&deviceInfo, "device_name = ?", consts.SelfDeviceName)
+	if tx.RowsAffected == 0 {
+		deviceInfo = s.initSelfDeviceInfo()
+	}
+	return deviceInfo
+}
+
+func (s *DeviceService) initSelfDeviceInfo() *entity.DeviceInfo {
+	deviceInfo := entity.GetNewDeviceInfo("localhost", "")
+	deviceInfo.DeviceName = consts.SelfDeviceName
+	s.db.Create(&deviceInfo)
 	return deviceInfo
 }
