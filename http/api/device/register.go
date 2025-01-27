@@ -9,5 +9,6 @@ import "github.com/gin-gonic/gin"
 	@since: 2025/1/27
 */
 func RegisterRouter(router *gin.RouterGroup) {
-	router.GET("ping", ping)
+	router.GET("inner/ping", ping)
+	router.POST("inner/pair", pair)
 }
