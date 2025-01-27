@@ -6,16 +6,12 @@ import (
 	"go-trans/services"
 )
 
-/**
-  @author: victor2022
-  @since: 2025/1/5
+/*
+*
+
+	@author: victor2022
+	@since: 2025/1/5
 */
-
-func RegisterRouter(router *gin.RouterGroup) {
-	router.POST("/startTransmitServer", startTransmitServer)
-	router.POST("/stopTransmitServer", stopTransmitServer)
-}
-
 func startTransmitServer(c *gin.Context) {
 	services.GetServiceContext().StartReceiveServer()
 	response.NewSuccessResponse(c, "start success")

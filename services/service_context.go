@@ -12,11 +12,12 @@ import (
 */
 
 type ServiceContext struct {
-	ServerService   *TransmitService
-	ConfigService   *ConfigService
-	SendTaskService *SendTaskService
-	DB              *gorm.DB
-	BusService      *BusService
+	ReceiveServerService *TransmitService
+	ConfigService        *ConfigService
+	SendTaskService      *SendTaskService
+	DeviceService        *DeviceService
+	DB                   *gorm.DB
+	BusService           *BusService
 }
 
 var serviceContext *ServiceContext
@@ -34,11 +35,12 @@ func GetServiceContext() *ServiceContext {
 		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
 
 		serviceContext = &ServiceContext{
-			ServerService:   NewServerService(),
-			ConfigService:   configService,
-			SendTaskService: NewTaskService(DB),
-			BusService:      NewBusService(busTopic),
-			DB:              DB,
+			ReceiveServerService: NewServerService(),
+			ConfigService:        configService,
+			SendTaskService:      NewTaskService(DB),
+			BusService:           NewBusService(busTopic),
+			DeviceService:        NewDeviceService(DB),
+			DB:                   DB,
 		}
 	})
 	return serviceContext
@@ -47,9 +49,9 @@ func GetServiceContext() *ServiceContext {
 func (s *ServiceContext) StartReceiveServer() {
 	port := s.ConfigService.GetOrDefault("transmit.server.port", "20235")
 	filePath := s.ConfigService.GetOrDefault("transmit.server.filepath", "./received")
-	s.ServerService.StartReceiveServer(port, filePath)
+	s.ReceiveServerService.StartReceiveServer(port, filePath)
 }
 
 func (s *ServiceContext) StopReceiveServer() {
-	s.ServerService.StopReceiveServer()
+	s.ReceiveServerService.StopReceiveServer()
 }

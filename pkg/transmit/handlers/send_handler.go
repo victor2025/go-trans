@@ -44,16 +44,19 @@ func NewSendHandler(sendTaskDto *dto.SendTaskDto, callback func(*dto.SendTaskDto
 
 func (s *SendHandler) Handle() {
 	log.Printf("--- Send mode ---")
+	
+	defer func() {
+		if r := recover(); r != nil {
+			s.markTaskFail(r.(string))
+		}
+	}()
 
 	// 启动callback
 	go s.invokeCallback()
 
 	// connect to server
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", s.addr, s.port))
-	utils.HandleError(err, func(args ...interface{}) {
-		s.markTaskFail()
-		panic(args[0])
-	})
+	utils.HandleError(err, utils.PanicOnError)
 	defer conn.Close()
 	log.Printf("Connected to %s:%s", s.addr, s.port)
 
@@ -67,7 +70,7 @@ func (s *SendHandler) Handle() {
 		s.isSendDir = true
 		// send the whole dir
 		dataSize, err := s.walkAndSendDir(conn, absPath, fileOrDirName)
-		utils.HandleError(err, utils.DoNothingOnErr)
+		utils.HandleError(err, utils.PanicOnError)
 		totalSize += dataSize
 	} else {
 		s.isSendDir = false
@@ -108,7 +111,8 @@ func (s *SendHandler) walkAndSendDir(conn net.Conn, dirPath string, dirPrefix st
 	return totalDataSize, err
 }
 
-/**
+/*
+*
 发送单个文件
 */
 func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, error) {
@@ -119,12 +123,12 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 
 	// send filename first
 	file, err := os.Open(s.baseDir + fileRelativePath)
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 	defer file.Close()
 	log.Printf("Start transferring: %v", fileRelativePath)
 	bytes := protocols.StrTransMsg(fileRelativePath).Bytes()
 	_, err = conn.Write(bytes)
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 
 	// send file size
 	stat, _ := file.Stat()
@@ -132,7 +136,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	bytes = protocols.NumTransMsg(fileSize).Bytes()
 	log.Printf("Total size : %d bytes", fileSize)
 	_, err = conn.Write(bytes)
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 
 	// read file and send
 	buf := make([]byte, s.sliceSize)
@@ -152,7 +156,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 		// send to conn
 		trans := protocols.ByteTransMsg(buf[:n])
 		_, err = conn.Write(trans.Bytes())
-		utils.HandleError(err, utils.ExitOnErr)
+		utils.HandleError(err, utils.PanicOnError)
 		md5Chk.Write(buf[:n])
 
 		// control transmit speed
@@ -176,7 +180,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	// send end flag
 	bytes = protocols.EndTransMsg(md5Chk.Sum(nil)).Bytes() // transmit md5Val
 	_, err = conn.Write(bytes)
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 
 	// show end status
 	dur := float32(time.Since(start).Microseconds()) / 1000
@@ -218,7 +222,8 @@ func (s *SendHandler) updateTask(progress float32, md5 string) {
 	}
 }
 
-func (s *SendHandler) markTaskFail() {
+func (s *SendHandler) markTaskFail(errMsg string) {
 	s.sendTaskDto.Task.Status = consts.Fail
+	s.sendTaskDto.Task.ErrorMsg = errMsg
 	s.isDone = true
 }

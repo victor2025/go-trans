@@ -11,9 +11,11 @@ import (
 	"time"
 )
 
-/**
-  @author: victor2022
-  @since: 2025/1/13
+/*
+*
+
+	@author: victor2022
+	@since: 2025/1/13
 */
 type SendTaskService struct {
 	db *gorm.DB
@@ -73,9 +75,8 @@ func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.
 	utils.HandleError(tx.Error, utils.PanicOnError)
 	result := make([]*dto.SendTaskDto, 0)
 	for _, task := range tasks {
-		var deviceInfo *entity.DeviceInfo
-		tx := s.db.Find(&deviceInfo, "device_id = ? AND connected = ?", task.ReceiverId, true)
-		if tx.RowsAffected == 0 || deviceInfo == nil {
+		deviceInfo := GetServiceContext().DeviceService.GetConnectedDeviceById(task.ReceiverId)
+		if deviceInfo == nil {
 			task.Status = consts.Fail
 			s.UpdateSendTask(task)
 			continue
