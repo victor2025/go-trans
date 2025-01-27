@@ -8,6 +8,7 @@ import (
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"log"
+	"runtime/debug"
 	"time"
 )
 
@@ -114,18 +115,26 @@ func (s *SendTaskProcessor) Start() {
 		if !s.isOn {
 			break
 		}
-		tasks, err := s.scanSendTasks()
-		utils.HandleError(err)
-		if tasks == nil || len(tasks) == 0 {
-			continue
-		}
-		for _, task := range tasks {
-			log.Printf("start to process send task %+v", task)
-			task.Task.Status = consts.Processing
-			err := s.sendTaskService.UpdateSendTask(task.Task)
+		func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("send task processor panic, err: %v, stack: %s", err, string(debug.Stack()))
+				}
+			}()
+
+			tasks, err := s.scanSendTasks()
 			utils.HandleError(err)
-			s.startSendTask(task)
-		}
+			if tasks == nil || len(tasks) == 0 {
+				return
+			}
+			for _, task := range tasks {
+				log.Printf("start to process send task %+v", task)
+				task.Task.Status = consts.Processing
+				err := s.sendTaskService.UpdateSendTask(task.Task)
+				utils.HandleError(err)
+				s.startSendTask(task)
+			}
+		}()
 	}
 	log.Println("stop send task processor by signal")
 }
