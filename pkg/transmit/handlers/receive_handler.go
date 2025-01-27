@@ -115,7 +115,7 @@ func (s *ReceiveHandler) serveConn(conn net.Conn) {
 	sizeInKBytes := float32(totalSize) / 1024
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := sizeInKBytes / (dur / 1000)
-	log.Printf("--- Info: receive file complete, total time: %.2fms, total size: %.2fKB, avg speed %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
+	log.Printf("--- Info: receive file complete, total runner: %.2fms, total size: %.2fKB, avg speed %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 }
 
 // 接收新文件
@@ -172,7 +172,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 	log.Printf("--- Receive file complete ---")
 	log.Printf("Filepath: %s", file.Name())
 	log.Printf("MD5: %s", md5Val)
-	log.Printf("Info: cost time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
+	log.Printf("Info: cost runner: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
 	if md5Val != rcvdMd5 {
 		log.Printf("WARN: File md5Val is different, please check manually!")
 		return 0, fmt.Errorf("file md5 not match fileMd5:%s, actualMd5:%s", md5Val, rcvdMd5)

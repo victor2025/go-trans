@@ -7,13 +7,15 @@ import (
 	"time"
 )
 
-/**
-  @author: victor2022
-  @since: 2025/1/19
+/*
+*
+
+	@author: victor2022
+	@since: 2025/1/19
 */
 func InitBus(topic string) *bus.Bus {
 	node := uint64(1)
-	initialTime := uint64(time.Now().UnixMilli()) // set 2020-01-01 PST as initial time
+	initialTime := uint64(time.Now().UnixMilli()) // set 2020-01-01 PST as initial runner
 	m, err := monoton.New(sequencer.NewMillisecond(), node, initialTime)
 	if err != nil {
 		panic(err)

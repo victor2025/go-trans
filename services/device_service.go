@@ -3,18 +3,21 @@ package services
 import (
 	"fmt"
 	"go-trans/pkg/models/consts"
+	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
+	"go-trans/pkg/runner"
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"strings"
+	"time"
 )
 
-/*
-*
-
-	@author: victor2022
-	@since: 2025/1/27
+/**
+@author: victor2022
+@since: 2025/1/27
 */
+
+// DeviceService 设备服务
 type DeviceService struct {
 	db *gorm.DB
 }
@@ -25,6 +28,7 @@ func NewDeviceService(db *gorm.DB) *DeviceService {
 	}
 }
 
+// GetConnectedDeviceById 根据id查询已连接设备
 func (s *DeviceService) GetConnectedDeviceById(deviceId string) *entity.DeviceInfo {
 	var deviceInfo *entity.DeviceInfo
 	tx := s.db.Find(&deviceInfo, "device_id = ? AND connected = ?", deviceId, true)
@@ -35,15 +39,19 @@ func (s *DeviceService) GetConnectedDeviceById(deviceId string) *entity.DeviceIn
 	return deviceInfo
 }
 
+// GetSelfDeviceInfo 查询自身设备信息
 func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 	var deviceInfo *entity.DeviceInfo
 	tx := s.db.Find(&deviceInfo, "mode = ?", consts.SelfMode)
 	if tx.RowsAffected == 0 {
-		deviceInfo = s.initSelfDeviceInfo()
+		// 创建新的设备信息
+		deviceInfo = entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
+		s.db.Create(&deviceInfo)
 	}
 	return deviceInfo
 }
 
+// PairDeviceForReceive 以接收者的身份配对设备
 func (s *DeviceService) PairDeviceForReceive(deviceId, deviceName, pairCode string) error {
 	selfDeviceInfo := s.GetSelfDeviceInfo()
 	if selfDeviceInfo.PairCode != strings.ToLower(pairCode) {
@@ -65,14 +73,40 @@ func (s *DeviceService) PairDeviceForReceive(deviceId, deviceName, pairCode stri
 	return nil
 }
 
-func (s *DeviceService) initSelfDeviceInfo() *entity.DeviceInfo {
-	deviceInfo := entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
-	s.db.Create(&deviceInfo)
-	return deviceInfo
-}
-
+// RefreshSelfPairCode 刷新配对码
 func (s *DeviceService) RefreshSelfPairCode() error {
 	deviceInfo := s.GetSelfDeviceInfo()
 	deviceInfo.RefreshPairCode()
 	return s.db.Save(&deviceInfo).Error
+}
+
+// DeviceScanProcessor 设备扫描处理器
+type DeviceScanProcessor struct {
+	runner.TickerRunner
+	scanResult map[string]dto.DeviceScanInfo
+	isOn       bool
+}
+
+func NewDeviceScanProcessor() *DeviceScanProcessor {
+	processor := &DeviceScanProcessor{
+		TickerRunner: runner.TickerRunner{
+			Period: time.Second * 5,
+		},
+		scanResult: make(map[string]dto.DeviceScanInfo),
+	}
+	processor.Runner = processor
+	return processor
+}
+func (p *DeviceScanProcessor) MarkStarted() {
+	p.isOn = true
+}
+
+func (p *DeviceScanProcessor) Handle() {
+
+}
+func (p *DeviceScanProcessor) IsOn() bool {
+	return p.isOn
+}
+func (p *DeviceScanProcessor) Stop() {
+	p.isOn = false
 }

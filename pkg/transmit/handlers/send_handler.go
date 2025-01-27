@@ -44,7 +44,7 @@ func NewSendHandler(sendTaskDto *dto.SendTaskDto, callback func(*dto.SendTaskDto
 
 func (s *SendHandler) Handle() {
 	log.Printf("--- Send mode ---")
-	
+
 	defer func() {
 		if r := recover(); r != nil {
 			s.markTaskFail(r.(string))
@@ -85,7 +85,7 @@ func (s *SendHandler) Handle() {
 	sizeInKBytes := float32(totalSize) / 1024
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := sizeInKBytes / (dur / 1000)
-	log.Printf("--- Info: send file complete, total size: %.2fKB, total time: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
+	log.Printf("--- Info: send file complete, total size: %.2fKB, total runner: %.2fms, avg speed: %.2fKB/s ---\n", dur, sizeInKBytes, avgSpeed)
 
 	// 结束任务
 	s.isDone = true
@@ -160,7 +160,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 		md5Chk.Write(buf[:n])
 
 		// control transmit speed
-		// time.Sleep(time.Millisecond * 10000)
+		// runner.Sleep(runner.Millisecond * 10000)
 
 		// show status
 		seq++
@@ -189,7 +189,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 	log.Printf("--- Send file complete ---")
 	log.Printf("Filepath: %s", file.Name())
 	log.Printf("MD5: %s", md5Val)
-	log.Printf("Info: cost time: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
+	log.Printf("Info: cost runner: %.2fms, avg speed: %.2fKB/s\n", dur, avgSpeed)
 
 	// 更新md5值
 	s.updateTask(1, md5Val)
@@ -198,9 +198,9 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 }
 
 func (s *SendHandler) invokeCallback() {
-	// 创建一个时间间隔为 200ms 的 ticker
+	// 创建一个时间间隔为 200ms 的 runner
 	ticker := time.NewTicker(200 * time.Millisecond)
-	defer ticker.Stop() // 确保在退出时停止 ticker
+	defer ticker.Stop() // 确保在退出时停止 runner
 	for range ticker.C {
 		s.callback(&s.sendTaskDto)
 		if s.isDone {

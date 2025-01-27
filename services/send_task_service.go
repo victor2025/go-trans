@@ -4,6 +4,7 @@ import (
 	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
+	"go-trans/pkg/runner"
 	transHandler "go-trans/pkg/transmit/handlers"
 	"go-trans/utils"
 	"gorm.io/gorm"
@@ -92,6 +93,7 @@ func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.
 
 // SendTaskProcessor 发送任务处理器
 type SendTaskProcessor struct {
+	runner.TickerRunner
 	isOn            bool
 	scanFunc        func() ([]*dto.SendTaskDto, error)
 	callbackFunc    func(*dto.SendTaskDto)
@@ -99,55 +101,56 @@ type SendTaskProcessor struct {
 	busService      *BusService
 }
 
-func NewSendTaskProcessor(sendTaskService *SendTaskService, busService *BusService) SendTaskProcessor {
-	return SendTaskProcessor{
+func NewSendTaskProcessor(sendTaskService *SendTaskService, busService *BusService) *SendTaskProcessor {
+	processor := &SendTaskProcessor{
+		TickerRunner: runner.TickerRunner{
+			Period: time.Millisecond * 200,
+		},
 		sendTaskService: sendTaskService,
 		busService:      busService,
 	}
+	processor.Runner = processor
+	return processor
 }
 
-func (s *SendTaskProcessor) Start() {
-	// 创建一个时间间隔为 200ms 的 ticker
-	ticker := time.NewTicker(200 * time.Millisecond)
-	defer ticker.Stop() // 确保在退出时停止 ticker
-	s.isOn = true
-	for range ticker.C {
-		if !s.isOn {
-			break
+func (p *SendTaskProcessor) MarkStarted() {
+	p.isOn = true
+}
+
+func (p *SendTaskProcessor) IsOn() bool {
+	return p.isOn
+}
+
+func (p *SendTaskProcessor) Handle() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("send task processor panic, err: %v, stack: %s", err, string(debug.Stack()))
 		}
-		func() {
-			defer func() {
-				if err := recover(); err != nil {
-					log.Printf("send task processor panic, err: %v, stack: %s", err, string(debug.Stack()))
-				}
-			}()
+	}()
 
-			tasks, err := s.scanSendTasks()
-			utils.HandleError(err)
-			if tasks == nil || len(tasks) == 0 {
-				return
-			}
-			for _, task := range tasks {
-				log.Printf("start to process send task %+v", task)
-				task.Task.Status = consts.Processing
-				err := s.sendTaskService.UpdateSendTask(task.Task)
-				utils.HandleError(err)
-				s.startSendTask(task)
-			}
-		}()
+	tasks, err := p.scanSendTasks()
+	utils.HandleError(err)
+	if tasks == nil || len(tasks) == 0 {
+		return
 	}
-	log.Println("stop send task processor by signal")
+	for _, task := range tasks {
+		log.Printf("start to process send task %+v", task)
+		task.Task.Status = consts.Processing
+		err := p.sendTaskService.UpdateSendTask(task.Task)
+		utils.HandleError(err)
+		p.startSendTask(task)
+	}
 }
 
-func (s *SendTaskProcessor) Stop() {
-	s.isOn = false
+func (p *SendTaskProcessor) Stop() {
+	p.isOn = false
 }
 
-func (s *SendTaskProcessor) scanSendTasks() ([]*dto.SendTaskDto, error) {
-	return s.sendTaskService.GetSendTaskDtos(1, 10, "")
+func (p *SendTaskProcessor) scanSendTasks() ([]*dto.SendTaskDto, error) {
+	return p.sendTaskService.GetSendTaskDtos(1, 10, "")
 }
 
-func (s *SendTaskProcessor) startSendTask(task *dto.SendTaskDto) {
+func (p *SendTaskProcessor) startSendTask(task *dto.SendTaskDto) {
 	handler := transHandler.NewSendHandler(task, func(taskDto *dto.SendTaskDto) {
 		err := serviceContext.BusService.PostMsg(taskDto)
 		utils.HandleError(err)

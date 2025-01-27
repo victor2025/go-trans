@@ -6,9 +6,11 @@ import (
 	"time"
 )
 
-/**
-  @author: victor2022
-  @since: 2025/1/25
+/*
+*
+
+	@author: victor2022
+	@since: 2025/1/25
 */
 func RegisterProcessors() {
 	registerSendTaskProcessor()
@@ -21,6 +23,6 @@ func registerSendTaskProcessor() {
 	busService := services.GetServiceContext().BusService
 	// 启动processor
 	processor := services.NewSendTaskProcessor(sendTaskService, busService)
-	go processor.Start()
+	go processor.Run()
 	log.Printf("Send task processor started in %dms\n", time.Since(start).Milliseconds())
 }
