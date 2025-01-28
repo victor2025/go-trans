@@ -5,6 +5,7 @@ import (
 	"go-trans/http/api/device"
 	"go-trans/http/api/system"
 	"go-trans/http/api/task"
+	"go-trans/pkg/models/consts"
 	"go-trans/services"
 	"go-trans/utils"
 )
@@ -17,7 +18,7 @@ import (
 // StartHttpServer 启动http服务器
 func StartHttpServer() {
 	engine := initGinEngine()
-	serverPort := services.GetServiceContext().ConfigService.GetOrDefault("http.server.port", "8080")
+	serverPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
 	// 读取配置
 	err := engine.Run(":" + serverPort)
 	utils.HandleError(err, utils.ExitOnErr)

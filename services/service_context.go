@@ -1,6 +1,7 @@
 package services
 
 import (
+	"go-trans/pkg/models/consts"
 	"go-trans/pkg/orm"
 	"gorm.io/gorm"
 	"sync"
@@ -29,12 +30,12 @@ func GetServiceContext() *ServiceContext {
 		// 配置服务
 		configService := NewConfigService()
 		// 持久层配置
-		dbLocation := configService.GetOrDefaultFromFile("orm.db.location", "./res/db/dev.db")
+		dbLocation := configService.GetOrDefaultFromFile(consts.OrmDbLocation, "./res/db/dev.db")
 		DB := orm.GetDb(dbLocation)
 		// 为configService配置db
 		configService.db = DB
 		// 总线配置
-		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
+		busTopic := configService.GetOrDefault(consts.MsgBusTopic, "msg.bus")
 
 		serviceContext = &ServiceContext{
 			ReceiveServerService: NewServerService(),
@@ -49,8 +50,8 @@ func GetServiceContext() *ServiceContext {
 }
 
 func (s *ServiceContext) StartReceiveServer() {
-	port := s.ConfigService.GetOrDefault("transmit.server.port", "20235")
-	filePath := s.ConfigService.GetOrDefault("transmit.server.filepath", "./received")
+	port := s.ConfigService.GetOrDefault(consts.TransServerPort, "20235")
+	filePath := s.ConfigService.GetOrDefault(consts.TransServerFilepath, "./received")
 	s.ReceiveServerService.StartReceiveServer(port, filePath)
 }
 
