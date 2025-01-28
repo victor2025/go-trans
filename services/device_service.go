@@ -3,7 +3,6 @@ package services
 import (
 	"fmt"
 	"go-trans/pkg/models/consts"
-	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
 	"go-trans/utils"
 	"gorm.io/gorm"
@@ -76,16 +75,4 @@ func (s *DeviceService) RefreshSelfPairCode() error {
 	deviceInfo := s.GetSelfDeviceInfo()
 	deviceInfo.RefreshPairCode()
 	return s.db.Save(&deviceInfo).Error
-}
-
-// DeviceScanProcessor 设备扫描处理器
-type DeviceScanner struct {
-	scanResult map[string]dto.DeviceScanInfo
-}
-
-func NewDeviceScanner() *DeviceScanner {
-	processor := &DeviceScanner{
-		scanResult: make(map[string]dto.DeviceScanInfo),
-	}
-	return processor
 }

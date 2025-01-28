@@ -17,6 +17,7 @@ type ServiceContext struct {
 	ConfigService        *ConfigService
 	SendTaskService      *SendTaskService
 	DeviceService        *DeviceService
+	DeviceScanService    *DeviceScanService
 	DB                   *gorm.DB
 	BusService           *BusService
 }
@@ -43,6 +44,7 @@ func GetServiceContext() *ServiceContext {
 			SendTaskService:      NewTaskService(DB),
 			BusService:           NewBusService(busTopic),
 			DeviceService:        NewDeviceService(DB),
+			DeviceScanService:    NewDeviceScanService(),
 			DB:                   DB,
 		}
 	})

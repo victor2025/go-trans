@@ -73,12 +73,12 @@ func (s *ReceiveHandler) startServer() {
 	log.Printf("--- Receive mode ---")
 	// start tcp listen
 	listener, err := net.Listen("tcp", ":"+s.port)
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 	log.Printf("Listening to: %s", s.port)
 	s.listener = listener
 	// show local ip
 	addrs, err := net.InterfaceAddrs()
-	utils.HandleError(err, utils.ExitOnErr)
+	utils.HandleError(err, utils.PanicOnError)
 	var addrList = make([]string, 0)
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
