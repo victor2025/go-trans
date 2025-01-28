@@ -5,12 +5,13 @@ import (
 	"go-trans/pkg/models/consts"
 )
 
-/*
-*
+/**
 
-	@author: victor2022
-	@since: 2025/1/19
+@author: victor2022
+@since: 2025/1/19
 */
+
+// DeviceInfo 设备信息
 type DeviceInfo struct {
 	*BaseModel
 	DeviceId   string            `gorm:"index:idx_device_id" json:"device_id"`

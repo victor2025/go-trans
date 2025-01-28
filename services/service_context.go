@@ -29,8 +29,10 @@ func GetServiceContext() *ServiceContext {
 		// 配置服务
 		configService := NewConfigService()
 		// 持久层配置
-		dbLocation := configService.GetOrDefault("orm.db.location", "./res/db/dev.db")
+		dbLocation := configService.GetOrDefaultFromFile("orm.db.location", "./res/db/dev.db")
 		DB := orm.GetDb(dbLocation)
+		// 为configService配置db
+		configService.db = DB
 		// 总线配置
 		busTopic := configService.GetOrDefault("msg.bus.topic", "msg.bus")
 
