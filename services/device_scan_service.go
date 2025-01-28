@@ -1,10 +1,17 @@
 package services
 
 import (
+	"encoding/json"
+	"fmt"
+	"go-trans/http/response"
+	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
 	"go-trans/utils"
+	"io"
 	"log"
 	"net"
+	"net/http"
+	"strconv"
 )
 
 /**
@@ -46,7 +53,7 @@ func (s *DeviceScanService) scanDevice() {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				s.scanDevicesByIpRange(ipnet.IP.To4())
+				go s.scanDevicesByIpRange(ipnet.IP.To4())
 			}
 		}
 	}
@@ -75,16 +82,46 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 				continue
 			}
 			// 扫描
+			go s.scanDeviceByIp(ipCursor.String())
 		}
 	}
 }
 
 func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
+	httpClient := &http.Client{}
+	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
+	port, _ := strconv.Atoi(portStr)
+	for retryCnt := 0; retryCnt < 10; retryCnt++ {
+		url := fmt.Sprintf("http://%s:%d%s", ipAddr, port, urlSuffix)
+		request, err := http.NewRequest("GET", url, nil)
+		utils.HandleError(err)
+		request.Header.Set("source", consts.DeviceScanIdentityParam)
+		log.Printf("device scan service, scanning url:%s \n", url)
+		resp, err := httpClient.Do(request)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			log.Printf("receive device scan response:%v\n", string(body))
+			// 解析返回值
+			respEntity := &response.Entity{}
+			err := json.Unmarshal(body, respEntity)
+			utils.HandleError(err)
+			contentMap := respEntity.Content.(map[string]interface{})
+			scanInfo := dto.DeviceScanInfo{
+				Ip:       ipAddr,
+				Port:     strconv.Itoa(port),
+				DeviceId: contentMap["deviceId"].(string),
+			}
+			s.scanResult[scanInfo.DeviceId] = scanInfo
+			log.Printf("discover new device, info:%s \n", scanInfo)
+			break
+		}
+		port++
+	}
 
 }
 
 func (s *DeviceScanService) GetScanResults() []*dto.DeviceScanInfo {
-	results := make([]*dto.DeviceScanInfo, len(s.scanResult))
+	results := make([]*dto.DeviceScanInfo, 0)
 	for _, scanInfo := range s.scanResult {
 		results = append(results, &scanInfo)
 	}

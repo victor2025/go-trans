@@ -25,13 +25,13 @@ func StartHttpServer() {
 	port, _ := strconv.Atoi(portStr)
 	var err error
 	for retryCnt := 0; retryCnt < 10; retryCnt++ {
-		port += 1
 		// 启动服务器
 		log.Printf("try to start http server at port: %d\n", port)
 		err = engine.Run(fmt.Sprintf(":%d", port))
 		if err == nil {
 			break
 		}
+		port += 1
 	}
 	utils.HandleError(err, utils.PanicOnError)
 }

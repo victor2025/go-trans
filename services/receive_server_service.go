@@ -35,7 +35,6 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 	if !s.receiveServerIsOn {
 		var receiveHandler *handlers.ReceiveHandler
 		for retryCnt := 0; retryCnt < 10; retryCnt++ {
-			s.ServerPort += 1
 			receiveHandler = handlers.NewReceiveHandler(fmt.Sprintf("%d", s.ServerPort), basePath)
 			func() {
 				defer func() {
@@ -49,6 +48,7 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 			if err == nil {
 				break
 			}
+			s.ServerPort += 1
 		}
 		utils.HandleError(err, utils.PanicOnError)
 		s.receiveServerIsOn = true
