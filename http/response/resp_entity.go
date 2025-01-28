@@ -15,7 +15,7 @@ const (
 	fail    responseStatus = "n"
 )
 
-type ResponseEntity struct {
+type Entity struct {
 	Success responseStatus `json:"success"`
 	Content any            `json:"content"`
 	ErrMsg  string         `json:"errMsg"`
@@ -24,9 +24,9 @@ type ResponseEntity struct {
 type responseStatus string
 
 func NewSuccessResponse(c *gin.Context, data any) {
-	c.JSON(http.StatusOK, ResponseEntity{Success: success, Content: data})
+	c.JSON(http.StatusOK, Entity{Success: success, Content: data})
 }
 
 func NewFailResponse(c *gin.Context, data any, errMsg string) {
-	c.JSON(http.StatusInternalServerError, ResponseEntity{Success: fail, Content: data, ErrMsg: errMsg})
+	c.JSON(http.StatusInternalServerError, Entity{Success: fail, Content: data, ErrMsg: errMsg})
 }
