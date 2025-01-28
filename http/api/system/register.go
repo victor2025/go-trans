@@ -8,6 +8,9 @@ import "github.com/gin-gonic/gin"
 */
 
 func RegisterRouter(router *gin.RouterGroup) {
+	// transmit server
 	router.POST("/startTransmitServer", startTransmitServer)
 	router.POST("/stopTransmitServer", stopTransmitServer)
+	// settings
+	router.POST("/updateSetting", updateSetting)
 }

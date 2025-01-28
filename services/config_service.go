@@ -5,6 +5,7 @@ import (
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"strings"
+	"time"
 )
 
 /**
@@ -57,7 +58,7 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 	var config string
 	// 先从db取
 	var configInfo *entity.ConfigInfo
-	tx := c.db.Find(&configInfo, "key = ?", key)
+	tx := c.db.Find(&configInfo, "config_id = ?", key)
 	if tx.RowsAffected == 0 {
 		// db中不存在，则从本地文件取
 		config = c.GetOrDefaultFromFile(key, defaultVal)
@@ -65,5 +66,21 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 		configInfo = entity.GetNewConfigInfo(key, config)
 		c.db.Save(&configInfo)
 	}
+	if configInfo.ConfigValue == "" {
+		return defaultVal
+	}
 	return configInfo.ConfigValue
+}
+
+// UpdateConfig 更新配置
+func (c *ConfigService) UpdateConfig(key, config string) error {
+	var configInfo *entity.ConfigInfo
+	tx := c.db.Find(&configInfo, "config_id = ?", key)
+	if tx.RowsAffected == 0 {
+		configInfo = entity.GetNewConfigInfo(key, config)
+	} else {
+		configInfo.ConfigValue = config
+		configInfo.GmtModify = time.Now()
+	}
+	return c.db.Save(&configInfo).Error
 }

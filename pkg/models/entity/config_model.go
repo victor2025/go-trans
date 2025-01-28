@@ -8,7 +8,7 @@ package entity
 // ConfigInfo 配置信息
 type ConfigInfo struct {
 	*BaseModel
-	ConfigId    string `json:"config_id"`
+	ConfigId    string `gorm:"unique; not null" json:"config_id"`
 	ConfigValue string `json:"config_value"`
 }
 
