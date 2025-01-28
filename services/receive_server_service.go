@@ -1,8 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"go-trans/pkg/transmit/handlers"
+	"go-trans/utils"
 	"log"
+	"strconv"
 )
 
 /*
@@ -15,6 +18,7 @@ import (
 type TransmitService struct {
 	receiveServerIsOn bool
 	receiveHandler    *handlers.ReceiveHandler
+	ServerPort        int
 }
 
 func NewServerService() *TransmitService {
@@ -25,13 +29,32 @@ func NewServerService() *TransmitService {
 
 // StartReceiveServer startup server
 func (s *TransmitService) StartReceiveServer(port, basePath string) {
+	var err error
+	s.ServerPort, err = strconv.Atoi(port)
+	utils.HandleError(err, utils.PanicOnError)
 	if !s.receiveServerIsOn {
-		receiveHandler := handlers.NewReceiveHandler(port, basePath)
-		go receiveHandler.Handle()
+		var receiveHandler *handlers.ReceiveHandler
+		for retryCnt := 0; retryCnt < 10; retryCnt++ {
+			s.ServerPort += 1
+			receiveHandler = handlers.NewReceiveHandler(fmt.Sprintf("%d", s.ServerPort), basePath)
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("start transmit server panic: %v", r)
+						err = fmt.Errorf("%v", r)
+					}
+				}()
+				receiveHandler.Handle()
+			}()
+			if err == nil {
+				break
+			}
+		}
+		utils.HandleError(err, utils.PanicOnError)
 		s.receiveServerIsOn = true
 		s.receiveHandler = receiveHandler
 	} else {
-		log.Printf("transmit server is already on, port:%s", port)
+		log.Printf("transmit server is already on, port:%d", s.ServerPort)
 	}
 }
 

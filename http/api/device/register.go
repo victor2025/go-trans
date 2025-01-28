@@ -15,5 +15,5 @@ func RegisterRouter(router *gin.RouterGroup) {
 
 	// 设备发现
 	router.POST("discovery/startScan", startScan)
-	router.POST("discovery/getScanResult", getScanResult)
+	router.GET("discovery/getScanResult", getScanResult)
 }

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-trans/http/api/device"
 	"go-trans/http/api/system"
@@ -8,6 +9,8 @@ import (
 	"go-trans/pkg/models/consts"
 	"go-trans/services"
 	"go-trans/utils"
+	"log"
+	"strconv"
 )
 
 /**
@@ -18,10 +21,19 @@ import (
 // StartHttpServer 启动http服务器
 func StartHttpServer() {
 	engine := initGinEngine()
-	serverPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
-	// 读取配置
-	err := engine.Run(":" + serverPort)
-	utils.HandleError(err, utils.ExitOnErr)
+	portStr := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
+	port, _ := strconv.Atoi(portStr)
+	var err error
+	for retryCnt := 0; retryCnt < 10; retryCnt++ {
+		port += 1
+		// 启动服务器
+		log.Printf("try to start http server at port: %d\n", port)
+		err = engine.Run(fmt.Sprintf(":%d", port))
+		if err == nil {
+			break
+		}
+	}
+	utils.HandleError(err, utils.PanicOnError)
 }
 
 func initGinEngine() *gin.Engine {

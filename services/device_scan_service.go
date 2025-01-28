@@ -13,6 +13,10 @@ import (
 	设备发现服务
 */
 
+const (
+	urlSuffix = "/device/inner/ping"
+)
+
 // DeviceScanService 设备扫描处理器
 type DeviceScanService struct {
 	scanResult map[string]dto.DeviceScanInfo
@@ -42,18 +46,41 @@ func (s *DeviceScanService) scanDevice() {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				addrStr := ipnet.IP.String()
-				if len(addrStr) > 0 {
-					// todo 扫描
-				}
+				s.scanDevicesByIpRange(ipnet.IP.To4())
 			}
 		}
 	}
 
 }
 
-func (s *DeviceScanService) scanDevicesByIpRange(myIp string) {
-	// todo 根据ip范围扫描设备
+func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
+	localIp = localIp.To4()
+	localIpAddr := localIp.String()
+	ipCursor := localIp
+	// 生成ip范围
+	ip3Range := make([]uint8, 2)
+	if ipCursor[2] > 0 {
+		ip3Range[0] = ipCursor[2] - 1
+	}
+	if ipCursor[2] < 255 {
+		ip3Range[1] = ipCursor[2] + 1
+	}
+	// 根据ip范围扫描设备
+	for ip3 := ip3Range[0]; ip3 <= ip3Range[1]; ip3++ {
+		ipCursor[2] = ip3
+		for idx := 0; idx < 256; idx++ {
+			ipCursor[3] = uint8(idx)
+			ipAddr := ipCursor.To4().String()
+			if ipAddr == localIpAddr {
+				continue
+			}
+			// 扫描
+		}
+	}
+}
+
+func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
+
 }
 
 func (s *DeviceScanService) GetScanResults() []*dto.DeviceScanInfo {

@@ -36,11 +36,11 @@ func pair(c *gin.Context) {
 		return
 	}
 	// 返回port
-	serverPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, "20235")
+	transServerPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, "20235")
 	selfDeviceInfo := services.GetServiceContext().DeviceService.GetSelfDeviceInfo()
 	response.NewSuccessResponse(c, &map[string]string{
-		"deviceId": selfDeviceInfo.DeviceId,
-		"port":     serverPort,
+		"deviceId":        selfDeviceInfo.DeviceId,
+		"transServerPort": transServerPort,
 	})
 }
 

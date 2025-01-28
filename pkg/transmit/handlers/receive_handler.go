@@ -32,7 +32,7 @@ func NewReceiveHandler(port, basePath string) *ReceiveHandler {
 }
 
 func (s *ReceiveHandler) Handle() {
-	log.Printf("start receive server at port %s", s.port)
+	log.Printf("try to start receive server at port %s", s.port)
 	// 开启服务
 	s.startServer()
 	defer func() {
@@ -63,18 +63,17 @@ func (s *ReceiveHandler) Handle() {
 }
 
 func (s *ReceiveHandler) StopHandle() {
-	log.Printf("Stop receive server at port: %s", s.port)
+	log.Printf("Stop receive server at port: %s\n", s.port)
 	s.isOn = false
 	s.listener.Close()
 }
 
 // 启用服务器
 func (s *ReceiveHandler) startServer() {
-	log.Printf("--- Receive mode ---")
 	// start tcp listen
 	listener, err := net.Listen("tcp", ":"+s.port)
 	utils.HandleError(err, utils.PanicOnError)
-	log.Printf("Listening to: %s", s.port)
+	log.Printf("transmit server started, listening to: %s", s.port)
 	s.listener = listener
 	// show local ip
 	addrs, err := net.InterfaceAddrs()
@@ -90,7 +89,7 @@ func (s *ReceiveHandler) startServer() {
 			}
 		}
 	}
-	log.Printf("Serving on: %s", strings.Join(addrList, ",\t"))
+	log.Printf("transmit server is serving on: %s\n", strings.Join(addrList, ",\t"))
 	s.isOn = true
 }
 

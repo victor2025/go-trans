@@ -13,7 +13,7 @@ import (
 
 func startScan(c *gin.Context) {
 	services.GetServiceContext().DeviceScanService.StartScan()
-	response.NewSuccessResponse(c, "")
+	response.NewSuccessResponse(c, "success")
 }
 
 func getScanResult(c *gin.Context) {
