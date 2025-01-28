@@ -1,11 +1,11 @@
 package app
 
-/*
-*
-
-	@author: victor2022
-	@since: 2025/1/24
+/**
+@author: victor2022
+@since: 2025/1/24
 */
+
+// Run 启动主应用
 func Run() {
 	// 初始化系统
 	RegisterMsgConsumers()
