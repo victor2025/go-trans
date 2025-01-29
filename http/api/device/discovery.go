@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-trans/http/response"
 	"go-trans/services"
+	"strings"
 )
 
 /**
@@ -12,7 +13,14 @@ import (
 */
 
 func startScan(c *gin.Context) {
-	services.GetServiceContext().DeviceScanService.StartScan()
+	ips := c.PostForm("ips")
+	var ipAddrs []string
+	if ips != "" {
+		ipAddrs = strings.Split(ips, ",")
+	} else {
+
+	}
+	services.GetServiceContext().DeviceScanService.StartScan(ipAddrs)
 	response.NewSuccessResponse(c, "success")
 }
 

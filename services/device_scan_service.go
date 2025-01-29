@@ -37,19 +37,26 @@ func NewDeviceScanService() *DeviceScanService {
 }
 
 // StartScan 启动新线程扫描
-func (s *DeviceScanService) StartScan() {
-	go s.scanDevice()
+func (s *DeviceScanService) StartScan(ipAddrs []string) {
+	go s.scanDevice(ipAddrs)
 }
 
 // 扫描设备
-func (s *DeviceScanService) scanDevice() {
+func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("scanDevice error:%s \n", r)
 		}
 	}()
 
-	ips := utils.GetLocalIps()
+	var ips []net.IP
+	if ipAddrs == nil || len(ipAddrs) == 0 {
+		ips = utils.GetLocalIps()
+	} else {
+		for _, ipAddr := range ipAddrs {
+			ips = append(ips, net.ParseIP(ipAddr))
+		}
+	}
 	for _, ip := range ips {
 		go s.scanDevicesByIpRange(ip)
 	}
