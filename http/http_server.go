@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-trans/http/api/device"
@@ -40,6 +41,9 @@ func StartHttpServer() {
 			httpServer.Addr = fmt.Sprintf(":%d", port)
 			err := httpServer.ListenAndServe()
 			if err == nil {
+				break
+			}
+			if errors.Is(err, http.ErrServerClosed) {
 				break
 			}
 			utils.HandleError(err)
