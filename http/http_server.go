@@ -28,7 +28,7 @@ var httpServer *http.Server
 // StartHttpServer 启动http服务器
 func StartHttpServer() {
 	engine := initGinEngine()
-	portStr := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
+	portStr := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
 	port, _ := strconv.Atoi(portStr)
 	httpServer = &http.Server{
 		Handler: engine,

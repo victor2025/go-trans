@@ -92,7 +92,7 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 
 func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 	httpClient := &http.Client{}
-	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "8080")
+	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
 	port, _ := strconv.Atoi(portStr)
 	for retryCnt := 0; retryCnt < 10; retryCnt++ {
 		url := fmt.Sprintf("http://%s:%d%s", ipAddr, port, urlSuffix)

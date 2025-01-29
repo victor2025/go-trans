@@ -16,7 +16,7 @@ import (
 */
 
 func TestDDL(t *testing.T) {
-	db := orm.GetDb("../res/db/dev.db")
+	db := orm.GetDb("../res/db/app.db")
 	db.Create(&entity.SendTaskInfo{
 		BaseTaskInfo: &entity.BaseTaskInfo{
 			BaseModel: &entity.BaseModel{
@@ -40,7 +40,7 @@ func TestDDL(t *testing.T) {
 }
 
 func TestCreateDevice(t *testing.T) {
-	db := orm.GetDb("../res/db/dev.db")
+	db := orm.GetDb("../res/db/app.db")
 	deviceInfo := entity.GetNewDeviceInfo("localhost", "20235")
 	deviceInfo.DeviceId = "001"
 	deviceInfo.DeviceName = "LOCAL"
