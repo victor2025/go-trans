@@ -1,9 +1,17 @@
 package app
 
+import "go-trans/services"
+
 /**
 @author: victor2022
 @since: 2025/1/24
 */
+
+// RunWithConfig 带配置启动主应用
+func RunWithConfig(config map[string]any) {
+	services.InitServiceContext(config)
+	Run()
+}
 
 // Run 启动主应用
 func Run() {

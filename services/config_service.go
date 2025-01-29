@@ -22,12 +22,19 @@ type ConfigService struct {
 	db        *gorm.DB
 }
 
-func NewConfigService() *ConfigService {
+func NewConfigService(config map[string]any) *ConfigService {
 	configMap := make(map[string]any)
 	configService := &ConfigService{
 		configMap: configMap,
 	}
+	// 从文件中读取配置
 	configService.loadConfigFromFiles()
+	// 从入参中读取配置
+	if config != nil {
+		for k, v := range config {
+			configMap[k] = v
+		}
+	}
 	return configService
 }
 
