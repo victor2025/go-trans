@@ -14,6 +14,10 @@ func Run() {
 	StartupServer()
 }
 
+// Shutdown 关闭主应用
 func Shutdown() {
-	// todo shutdown
+	// 关闭服务器
+	ShutdownServer()
+	// 关闭所有处理器
+	UnregisterProcessors()
 }

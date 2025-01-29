@@ -17,3 +17,11 @@ func StartupServer() {
 	// 启动http服务器
 	http.StartHttpServer()
 }
+
+// ShutdownServer 关闭服务器
+func ShutdownServer() {
+	// 关闭http服务器
+	http.ShutdownHttpServer()
+	// 关闭接收服务器
+	services.GetServiceContext().StopReceiveServer()
+}

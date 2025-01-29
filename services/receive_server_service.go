@@ -35,7 +35,7 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 	if !s.receiveServerIsOn {
 		var receiveHandler *handlers.ReceiveHandler
 		for retryCnt := 0; retryCnt < 10; retryCnt++ {
-			receiveHandler = handlers.NewReceiveHandler(fmt.Sprintf("%d", s.ServerPort), basePath)
+			receiveHandler = handlers.NewReceiveHandler(strconv.Itoa(s.ServerPort), basePath)
 			func() {
 				defer func() {
 					if r := recover(); r != nil {

@@ -2,16 +2,19 @@ package main
 
 import (
 	"C"
-	"go-trans/pkg/transmit/handlers"
+	"go-trans/app"
 )
 
-//export StartUp
-func StartUp(port, basePath *C.char) {
-	sHandler := handlers.NewReceiveHandler(C.GoString(port), C.GoString(basePath))
-	go sHandler.Handle()
+//export Startup
+func Startup() {
+	app.Run()
+}
+
+//export Shutdown
+func Shutdown() {
+	app.Shutdown()
 }
 
 func main() {
-	sHandler := handlers.NewReceiveHandler("20235", "")
-	sHandler.Handle()
+	app.Run()
 }
