@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"go-trans/app"
 	"go-trans/utils"
+	"log"
 )
 
 //export StartupWithConfig
-func StartupWithConfig(configStr string) {
+func StartupWithConfig(configStrC *C.char) {
 	var config map[string]any
+	configStr := C.GoString(configStrC)
+	log.Printf("receive start up config:%v\n", configStr)
 	err := json.Unmarshal([]byte(configStr), &config)
 	utils.HandleError(err, utils.PanicOnError)
 	app.RunWithConfig(config)

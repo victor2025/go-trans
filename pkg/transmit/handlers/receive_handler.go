@@ -72,18 +72,10 @@ func (s *ReceiveHandler) startServer() {
 	log.Printf("transmit server started, listening to: %s", s.port)
 	s.listener = listener
 	// show local ip
-	addrs, err := net.InterfaceAddrs()
-	utils.HandleError(err, utils.PanicOnError)
+	ips := utils.GetLocalIps()
 	var addrList = make([]string, 0)
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil || ipnet.IP.To16() != nil {
-				addrStr := ipnet.IP.String()
-				if len(addrStr) > 0 {
-					addrList = append(addrList, addrStr)
-				}
-			}
-		}
+	for _, ip := range ips {
+		addrList = append(addrList, ip.String())
 	}
 	log.Printf("transmit server is serving on: %s\n", strings.Join(addrList, ",\t"))
 	s.isOn = true

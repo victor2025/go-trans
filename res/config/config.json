@@ -10,9 +10,9 @@
       "filepath": "./received"
     }
   },
-  "data": {
-    "sqlite": {
-      "dbpath": "./db"
+  "orm": {
+    "db": {
+      "location": "./db/app.db"
     }
   }
 }

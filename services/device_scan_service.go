@@ -48,14 +48,10 @@ func (s *DeviceScanService) scanDevice() {
 			log.Printf("scanDevice error:%s \n", r)
 		}
 	}()
-	addrs, err := net.InterfaceAddrs()
-	utils.HandleError(err, utils.PanicOnError)
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				go s.scanDevicesByIpRange(ipnet.IP.To4())
-			}
-		}
+
+	ips := utils.GetLocalIps()
+	for _, ip := range ips {
+		go s.scanDevicesByIpRange(ip)
 	}
 
 }
