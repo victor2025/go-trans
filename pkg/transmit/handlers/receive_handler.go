@@ -35,11 +35,6 @@ func (s *ReceiveHandler) Handle() {
 	log.Printf("try to start receive server at port %s", s.port)
 	// 开启服务
 	s.startServer()
-	defer func() {
-		if s.isOn {
-			s.listener.Close()
-		}
-	}() // 退出时关闭服务
 
 	// 循环处理请求
 	for {
@@ -65,7 +60,8 @@ func (s *ReceiveHandler) Handle() {
 func (s *ReceiveHandler) StopHandle() {
 	log.Printf("Stop receive server at port: %s\n", s.port)
 	s.isOn = false
-	s.listener.Close()
+	err := s.listener.Close()
+	utils.HandleError(err)
 }
 
 // 启用服务器

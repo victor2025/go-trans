@@ -33,9 +33,9 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 	s.ServerPort, err = strconv.Atoi(port)
 	utils.HandleError(err, utils.PanicOnError)
 	if !s.receiveServerIsOn {
-		var receiveHandler *handlers.ReceiveHandler
+		s.receiveServerIsOn = true
 		for retryCnt := 0; retryCnt < 10; retryCnt++ {
-			receiveHandler = handlers.NewReceiveHandler(strconv.Itoa(s.ServerPort), basePath)
+			s.receiveHandler = handlers.NewReceiveHandler(strconv.Itoa(s.ServerPort), basePath)
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
@@ -43,7 +43,7 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 						err = fmt.Errorf("%v", r)
 					}
 				}()
-				receiveHandler.Handle()
+				s.receiveHandler.Handle()
 			}()
 			if err == nil {
 				break
@@ -51,8 +51,6 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 			s.ServerPort += 1
 		}
 		utils.HandleError(err, utils.PanicOnError)
-		s.receiveServerIsOn = true
-		s.receiveHandler = receiveHandler
 	} else {
 		log.Printf("transmit server is already on, port:%d", s.ServerPort)
 	}
