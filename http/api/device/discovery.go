@@ -24,6 +24,11 @@ func startScan(c *gin.Context) {
 	response.NewSuccessResponse(c, "success")
 }
 
+func stopScan(c *gin.Context) {
+	services.GetServiceContext().DeviceScanService.StopScan()
+	response.NewSuccessResponse(c, "success")
+}
+
 func getScanResult(c *gin.Context) {
 	results := services.GetServiceContext().DeviceScanService.GetScanResults()
 	response.NewSuccessResponse(c, results)

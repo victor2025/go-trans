@@ -27,11 +27,13 @@ const (
 // DeviceScanService 设备扫描处理器
 type DeviceScanService struct {
 	scanResult map[string]dto.DeviceScanInfo
+	sn         int
 }
 
 func NewDeviceScanService() *DeviceScanService {
 	processor := &DeviceScanService{
 		scanResult: make(map[string]dto.DeviceScanInfo),
+		sn:         0,
 	}
 	return processor
 }
@@ -41,8 +43,15 @@ func (s *DeviceScanService) StartScan(ipAddrs []string) {
 	go s.scanDevice(ipAddrs)
 }
 
+// StopScan 关闭正在进行的扫描任务
+func (s *DeviceScanService) StopScan() {
+	s.sn++
+}
+
 // 扫描设备
 func (s *DeviceScanService) scanDevice(ipAddrs []string) {
+	s.StopScan()
+	s.scanResult = make(map[string]dto.DeviceScanInfo)
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("scanDevice error:%s \n", r)
@@ -64,6 +73,7 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 }
 
 func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
+	currSn := s.sn
 	localIp = localIp.To4()
 	localIpAddr := localIp.String()
 	ipCursor := localIp
@@ -84,6 +94,10 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 			if ipAddr == localIpAddr {
 				continue
 			}
+			// 判断当前任务是否要停止
+			if s.sn != currSn {
+				break
+			}
 			// 扫描
 			go s.scanDeviceByIp(ipCursor.String())
 		}
@@ -91,6 +105,7 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 }
 
 func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
+	currSn := s.sn
 	httpClient := &http.Client{}
 	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
 	port, _ := strconv.Atoi(portStr)
@@ -119,6 +134,11 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 			break
 		}
 		port++
+
+		// 判断是否发起了新请求
+		if s.sn != currSn {
+			break
+		}
 	}
 
 }
