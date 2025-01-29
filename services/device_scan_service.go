@@ -114,7 +114,6 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 		request, err := http.NewRequest("GET", url, nil)
 		utils.HandleError(err)
 		request.Header.Set("source", consts.DeviceScanIdentityParam)
-		log.Printf("device scan service, scanning url:%s \n", url)
 		resp, err := httpClient.Do(request)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
