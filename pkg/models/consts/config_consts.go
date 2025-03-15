@@ -12,4 +12,5 @@ const (
 	TransServerPort     = "transmit.server.port"
 	TransServerFilepath = "transmit.server.filepath"
 	HttpServerPort      = "http.server.port"
+	LogEnable           = "log.enable"
 )

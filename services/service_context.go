@@ -30,7 +30,7 @@ func InitServiceContext(config map[string]any) {
 		// 配置服务
 		configService := NewConfigService(config)
 		// 持久层配置
-		dbLocation := configService.GetOrDefaultFromFile(consts.OrmDbLocation, "./res/db/app.db")
+		dbLocation := configService.GetOrDefault(consts.OrmDbLocation, "./res/db/app.db")
 		DB := orm.GetDb(dbLocation)
 		// 为configService配置db
 		configService.db = DB

@@ -18,17 +18,17 @@ const (
 )
 
 type ConfigService struct {
-	configMap map[string]any
-	db        *gorm.DB
+	configMap   map[string]any
+	configCache map[string]string
+	db          *gorm.DB
 }
 
 func NewConfigService(config map[string]any) *ConfigService {
 	configMap := make(map[string]any)
 	configService := &ConfigService{
-		configMap: configMap,
+		configMap:   configMap,
+		configCache: make(map[string]string),
 	}
-	// 从文件中读取配置
-	configService.loadConfigFromFiles()
 	// 从入参中读取配置
 	if config != nil {
 		for k, v := range config {
@@ -43,8 +43,8 @@ func (c *ConfigService) loadConfigFromFiles() {
 	utils.HandleError(err)
 }
 
-// GetOrDefaultFromFile 从文件中获取配置
-func (c *ConfigService) GetOrDefaultFromFile(key, defaultVal string) string {
+// GetOrDefaultFromMap 从map中获取配置，已废弃
+func (c *ConfigService) GetOrDefaultFromMap(key, defaultVal string) string {
 	parts := strings.Split(key, ".")
 	config := defaultVal
 	currResult := c.configMap
@@ -62,20 +62,17 @@ func (c *ConfigService) GetOrDefaultFromFile(key, defaultVal string) string {
 }
 
 func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
-	var config string
+	if c.configCache[key] != "" {
+		return c.configCache[key]
+	}
 	// 先从db取
 	var configInfo *entity.ConfigInfo
 	tx := c.db.Find(&configInfo, "config_id = ?", key)
 	if tx.RowsAffected == 0 {
-		// db中不存在，则从本地文件取
-		config = c.GetOrDefaultFromFile(key, defaultVal)
-		// 保存到db
-		configInfo = entity.GetNewConfigInfo(key, config)
-		c.db.Save(&configInfo)
+		// 默认配置
+		configInfo = entity.GetNewConfigInfo(key, defaultVal)
 	}
-	if configInfo.ConfigValue == "" {
-		return defaultVal
-	}
+	c.configCache[key] = defaultVal
 	return configInfo.ConfigValue
 }
 
@@ -89,5 +86,10 @@ func (c *ConfigService) UpdateConfig(key, config string) error {
 		configInfo.ConfigValue = config
 		configInfo.GmtModify = time.Now()
 	}
-	return c.db.Save(&configInfo).Error
+	err := c.db.Save(&configInfo).Error
+	if err != nil {
+		return err
+	}
+	c.configCache[key] = configInfo.ConfigValue
+	return nil
 }
