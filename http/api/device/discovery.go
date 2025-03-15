@@ -30,6 +30,10 @@ func stopScan(c *gin.Context) {
 }
 
 func getScanResult(c *gin.Context) {
-	results := services.GetServiceContext().DeviceScanService.GetScanResults()
-	response.NewSuccessResponse(c, results)
+	scanResults, scanning := services.GetServiceContext().DeviceScanService.GetScanResults()
+	result := map[string]any{
+		"results":  scanResults,
+		"scanning": scanning,
+	}
+	response.NewSuccessResponse(c, result)
 }

@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 /**
@@ -29,14 +30,15 @@ const (
 type DeviceScanService struct {
 	scanResult     map[string]dto.DeviceScanInfo
 	selfDeviceInfo *entity.DeviceInfo
-	sn         int
+	sn             int
+	scanning       bool
 }
 
 func NewDeviceScanService(info *entity.DeviceInfo) *DeviceScanService {
 	processor := &DeviceScanService{
 		scanResult:     make(map[string]dto.DeviceScanInfo),
 		selfDeviceInfo: info,
-		sn:         0,
+		sn:             0,
 	}
 	return processor
 }
@@ -53,7 +55,9 @@ func (s *DeviceScanService) StopScan() {
 
 // 扫描设备
 func (s *DeviceScanService) scanDevice(ipAddrs []string) {
+	// 初始化状态
 	s.StopScan()
+	s.scanning = true
 	s.scanResult = make(map[string]dto.DeviceScanInfo)
 	defer func() {
 		if r := recover(); r != nil {
@@ -61,6 +65,7 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 		}
 	}()
 
+	// 启动扫描任务
 	var ips []net.IP
 	if ipAddrs == nil || len(ipAddrs) == 0 {
 		ips = utils.GetLocalIps()
@@ -69,25 +74,42 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 			ips = append(ips, net.ParseIP(ipAddr))
 		}
 	}
+	var wg sync.WaitGroup
 	for _, ip := range ips {
-		go s.scanDevicesByIpRange(ip)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.scanDevicesByIpRange(ip)
+		}()
 	}
-
+	wg.Wait()
+	// 还原状态
+	log.Printf("scanDevice finished, discover %d devices", len(s.scanResult))
+	s.scanning = false
 }
 
 func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 	currSn := s.sn
 	localIp = localIp.To4()
 	ipCursor := localIp
+	ipStart := make(net.IP, net.IPv4len)
+	copy(ipStart, localIp)
+	ipStart[3] = 0
+	ipEnd := make(net.IP, net.IPv4len)
+	copy(ipEnd, ipStart)
+	ipEnd[3] = 255
 	// 生成ip范围
 	ip3Range := make([]uint8, 2)
 	if ipCursor[2] > 0 {
 		ip3Range[0] = ipCursor[2] - 1
+		ipStart[2] = ip3Range[0]
 	}
 	if ipCursor[2] < 255 {
 		ip3Range[1] = ipCursor[2] + 1
+		ipEnd[2] = ip3Range[1]
 	}
 	// 根据ip范围扫描设备
+	var wg sync.WaitGroup
 	for ip3 := ip3Range[0]; ip3 <= ip3Range[1]; ip3++ {
 		ipCursor[2] = ip3
 		for idx := 0; idx < 256; idx++ {
@@ -96,10 +118,16 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 			if s.sn != currSn {
 				break
 			}
-			// 扫描
-			go s.scanDeviceByIp(ipCursor.String())
+			// 使用 WaitGroup 等待所有 scanDeviceByIP 操作完成
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				s.scanDeviceByIp(ipCursor.String())
+			}()
 		}
 	}
+	wg.Wait()
+	log.Printf("scanIpRange: from %s to %s finished", ipStart.String(), ipEnd.String())
 }
 
 func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
@@ -142,10 +170,10 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 
 }
 
-func (s *DeviceScanService) GetScanResults() []*dto.DeviceScanInfo {
+func (s *DeviceScanService) GetScanResults() ([]*dto.DeviceScanInfo, bool) {
 	results := make([]*dto.DeviceScanInfo, 0)
 	for _, scanInfo := range s.scanResult {
 		results = append(results, &scanInfo)
 	}
-	return results
+	return results, s.scanning
 }
