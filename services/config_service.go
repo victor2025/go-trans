@@ -18,36 +18,36 @@ const (
 )
 
 type ConfigService struct {
-	configMap   map[string]any
-	configCache map[string]string
-	db          *gorm.DB
+	startupConfig map[string]any
+	configCache   map[string]string
+	db            *gorm.DB
 }
 
 func NewConfigService(config map[string]any) *ConfigService {
-	configMap := make(map[string]any)
+	startupConfig := make(map[string]any)
 	configService := &ConfigService{
-		configMap:   configMap,
-		configCache: make(map[string]string),
+		startupConfig: startupConfig,
+		configCache:   make(map[string]string),
 	}
 	// 从入参中读取配置
 	if config != nil {
 		for k, v := range config {
-			configMap[k] = v
+			startupConfig[k] = v
 		}
 	}
 	return configService
 }
 
 func (c *ConfigService) loadConfigFromFiles() {
-	err := utils.LoadJsonFile(baseConfigPath, &c.configMap)
+	err := utils.LoadJsonFile(baseConfigPath, &c.startupConfig)
 	utils.HandleError(err)
 }
 
-// GetOrDefaultFromMap 从map中获取配置，已废弃
-func (c *ConfigService) GetOrDefaultFromMap(key, defaultVal string) string {
+// GetOrDefaultFromStartupConfig 从map中获取配置，已废弃
+func (c *ConfigService) GetOrDefaultFromStartupConfig(key, defaultVal string) string {
 	parts := strings.Split(key, ".")
 	config := defaultVal
-	currResult := c.configMap
+	currResult := c.startupConfig
 	for idx, part := range parts {
 		if value, ok := currResult[part].(map[string]interface{}); ok {
 			currResult = value

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-trans/http/api/device"
 	"go-trans/http/api/system"
 	"go-trans/http/api/task"
@@ -12,9 +11,12 @@ import (
 	"go-trans/services"
 	"go-trans/utils"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 /**
@@ -26,31 +28,37 @@ import (
 var httpServer *http.Server
 
 // StartHttpServer 启动http服务器
-func StartHttpServer() {
+func StartHttpServer() int {
 	engine := initGinEngine()
 	portStr := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
 	port, _ := strconv.Atoi(portStr)
 	httpServer = &http.Server{
 		Handler: engine,
 	}
+	// 创建channel用于获取最终启动的端口
+	portChan := make(chan int, 1)
 	go func() {
 		var err error
 		for retryCnt := 0; retryCnt < 10; retryCnt++ {
 			// 启动服务器
 			log.Printf("try to start http server at port: %d\n", port)
 			httpServer.Addr = fmt.Sprintf(":%d", port)
-			err := httpServer.ListenAndServe()
+			listener, err := net.Listen("tcp", httpServer.Addr)
 			if err == nil {
-				break
-			}
-			if errors.Is(err, http.ErrServerClosed) {
-				break
+				// 发送绑定的端口
+				portChan <- port
+				err = httpServer.Serve(listener)
+				if errors.Is(err, http.ErrServerClosed) {
+					break
+				}
 			}
 			utils.HandleError(err)
 			port += 1
 		}
 		utils.HandleError(err, utils.PanicOnError)
 	}()
+	// 返回最终启动的端口
+	return <-portChan
 }
 
 // ShutdownHttpServer 关闭http服务器

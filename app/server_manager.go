@@ -11,11 +11,11 @@ import (
 */
 
 // StartupServer 启动服务器
-func StartupServer() {
+func StartupServer() int {
 	// 启动接收服务器
 	services.GetServiceContext().StartReceiveServer()
 	// 启动http服务器
-	http.StartHttpServer()
+	return http.StartHttpServer()
 }
 
 // ShutdownServer 关闭服务器

@@ -1,6 +1,9 @@
 package app
 
-import "go-trans/services"
+import (
+	"go-trans/services"
+	"log"
+)
 
 /**
 @author: victor2022
@@ -8,18 +11,20 @@ import "go-trans/services"
 */
 
 // RunWithConfig 带配置启动主应用
-func RunWithConfig(config map[string]any) {
+func RunWithConfig(config map[string]any) int {
 	services.InitServiceContext(config)
-	Run()
+	return Run()
 }
 
 // Run 启动主应用
-func Run() {
+func Run() int {
 	// 初始化系统
 	RegisterMsgConsumers()
 	RegisterProcessors()
 	// 启动服务器
-	StartupServer()
+	port := StartupServer()
+	log.Printf("http server started successfully at: %d\n", port)
+	return port
 }
 
 // Shutdown 关闭主应用
