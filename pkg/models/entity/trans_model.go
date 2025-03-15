@@ -15,11 +15,11 @@ import (
 
 type BaseTaskInfo struct {
 	*BaseModel
-	FileName string          `gorm:"not null" json:"file_name"`
-	FilePath string          `gorm:"not null" json:"file_path"`
+	FileName string          `gorm:"not null" json:"fileName"`
+	FilePath string          `gorm:"not null" json:"filePath"`
 	FileType consts.FileType `json:"type"`
 	Md5      string          `json:"md5"`
-	TaskId   string          `gorm:"unique; not null" json:"task_id"`
+	TaskId   string          `gorm:"unique; not null" json:"taskId"`
 	ErrorMsg string          `json:"error_msg"`
 }
 
@@ -28,7 +28,7 @@ type SendTaskInfo struct {
 	*BaseTaskInfo
 	Progress   float32           `gorm:"index:idx_send_progress_status" json:"progress"`
 	Status     consts.TaskStatus `gorm:"index:idx_send_progress_status" json:"status"`
-	ReceiverId string            `gorm:"index:idx_receiver" json:"receiver_id"`
+	ReceiverId string            `gorm:"index:idx_receiver" json:"receiverId"`
 }
 
 // ReceiveTaskInfo 接收任务信息
@@ -36,7 +36,7 @@ type ReceiveTaskInfo struct {
 	*BaseTaskInfo
 	Progress float32           `gorm:"index:idx_receive_progress_status" json:"progress"`
 	Status   consts.TaskStatus `gorm:"index:idx_receive_progress_status" json:"status"`
-	SenderId string            `gorm:"index:idx_sender" json:"sender_id"`
+	SenderId string            `gorm:"index:idx_sender" json:"senderId"`
 }
 
 func GetNewSendTaskInfo(path, receiverId string) (*SendTaskInfo, error) {

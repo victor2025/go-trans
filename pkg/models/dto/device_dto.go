@@ -7,7 +7,7 @@ package dto
 
 // DeviceScanInfo 设备扫描信息
 type DeviceScanInfo struct {
-	Ip       string
-	Port     string
-	DeviceId string
+	Ip       string `json:"ip"`
+	Port     string `json:"port"`
+	DeviceId string `json:"deviceId"`
 }
