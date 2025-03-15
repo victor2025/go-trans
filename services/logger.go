@@ -10,17 +10,18 @@ import (
   @since: 2025/3/15
 */
 
-func Println(v ...interface{}) {
+func Info(v ...interface{}) {
 	if !isLogEnabled() {
 		return
 	}
 	log.Println(v...)
 }
 
-func Printf(format string, v ...interface{}) {
+func InfoF(format string, v ...interface{}) {
 	if !isLogEnabled() {
 		return
 	}
+	log.Printf(format, v...)
 }
 
 func isLogEnabled() bool {

@@ -65,6 +65,9 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 	if c.configCache[key] != "" {
 		return c.configCache[key]
 	}
+	if c.db == nil {
+		return defaultVal
+	}
 	// 先从db取
 	var configInfo *entity.ConfigInfo
 	tx := c.db.Find(&configInfo, "config_id = ?", key)
@@ -72,7 +75,7 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 		// 默认配置
 		configInfo = entity.GetNewConfigInfo(key, defaultVal)
 	}
-	c.configCache[key] = defaultVal
+	c.configCache[key] = configInfo.ConfigValue
 	return configInfo.ConfigValue
 }
 

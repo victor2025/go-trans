@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 /**
@@ -32,6 +33,7 @@ type DeviceScanService struct {
 	selfDeviceInfo *entity.DeviceInfo
 	sn             int
 	scanning       bool
+	startTime      time.Time
 }
 
 func NewDeviceScanService(info *entity.DeviceInfo) *DeviceScanService {
@@ -58,10 +60,11 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 	// 初始化状态
 	s.StopScan()
 	s.scanning = true
+	s.startTime = time.Now()
 	s.scanResult = make(map[string]dto.DeviceScanInfo)
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("scanDevice error:%s \n", r)
+			InfoF("scanDevice error:%s \n", r)
 		}
 	}()
 
@@ -84,14 +87,16 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 	}
 	wg.Wait()
 	// 还原状态
-	log.Printf("scanDevice finished, discover %d devices", len(s.scanResult))
+	log.Printf("scanDevice finished, discover %d devices, costTime:%.2fs",
+		len(s.scanResult), time.Since(s.startTime).Seconds())
 	s.scanning = false
 }
 
 func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 	currSn := s.sn
 	localIp = localIp.To4()
-	ipCursor := localIp
+	ipCursor := make(net.IP, net.IPv4len)
+	copy(ipCursor, localIp)
 	ipStart := make(net.IP, net.IPv4len)
 	copy(ipStart, localIp)
 	ipStart[3] = 0
@@ -120,9 +125,10 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 			}
 			// 使用 WaitGroup 等待所有 scanDeviceByIP 操作完成
 			wg.Add(1)
+			aimedIp := ipCursor.String()
 			go func() {
 				defer wg.Done()
-				s.scanDeviceByIp(ipCursor.String())
+				s.scanDeviceByIp(aimedIp)
 			}()
 		}
 	}
@@ -131,19 +137,23 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 }
 
 func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
+	InfoF("scanDeviceByIp for: %v\n", ipAddr)
 	currSn := s.sn
 	httpClient := &http.Client{}
 	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
 	port, _ := strconv.Atoi(portStr)
-	for retryCnt := 0; retryCnt < 10; retryCnt++ {
+	totalRetryCntStr := GetServiceContext().ConfigService.GetOrDefault(consts.ScanPortRetryCnt, "3")
+	totalRetryCnt, _ := strconv.Atoi(totalRetryCntStr)
+	for retryCnt := 0; retryCnt < totalRetryCnt; retryCnt++ {
 		url := fmt.Sprintf("http://%s:%d%s", ipAddr, port, urlSuffix)
+		InfoF("scanning:%v\n", url)
 		request, err := http.NewRequest("GET", url, nil)
 		utils.HandleError(err)
 		request.Header.Set("source", consts.DeviceScanIdentityParam)
 		resp, err := httpClient.Do(request)
 		if err == nil && resp.StatusCode == http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			log.Printf("receive device scan response:%v\n", string(body))
+			InfoF("receive device scan response:%v\n", string(body))
 			// 解析返回值
 			respEntity := &response.Entity{}
 			err := json.Unmarshal(body, respEntity)

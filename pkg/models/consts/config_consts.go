@@ -12,5 +12,6 @@ const (
 	TransServerPort     = "transmit.server.port"
 	TransServerFilepath = "transmit.server.filepath"
 	HttpServerPort      = "http.server.port"
+	ScanPortRetryCnt    = "scan.port.retry.cnt"
 	LogEnable           = "log.enable"
 )
