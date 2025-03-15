@@ -6,6 +6,7 @@ import (
 	"go-trans/http/response"
 	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
+	"go-trans/pkg/models/entity"
 	"go-trans/utils"
 	"io"
 	"log"
@@ -26,12 +27,14 @@ const (
 
 // DeviceScanService 设备扫描处理器
 type DeviceScanService struct {
-	scanResult map[string]dto.DeviceScanInfo
+	scanResult     map[string]dto.DeviceScanInfo
+	selfDeviceInfo *entity.DeviceInfo
 }
 
-func NewDeviceScanService() *DeviceScanService {
+func NewDeviceScanService(info *entity.DeviceInfo) *DeviceScanService {
 	processor := &DeviceScanService{
-		scanResult: make(map[string]dto.DeviceScanInfo),
+		scanResult:     make(map[string]dto.DeviceScanInfo),
+		selfDeviceInfo: info,
 	}
 	return processor
 }
@@ -65,7 +68,6 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 
 func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 	localIp = localIp.To4()
-	localIpAddr := localIp.String()
 	ipCursor := localIp
 	// 生成ip范围
 	ip3Range := make([]uint8, 2)
@@ -80,10 +82,6 @@ func (s *DeviceScanService) scanDevicesByIpRange(localIp net.IP) {
 		ipCursor[2] = ip3
 		for idx := 0; idx < 256; idx++ {
 			ipCursor[3] = uint8(idx)
-			ipAddr := ipCursor.To4().String()
-			if ipAddr == localIpAddr {
-				continue
-			}
 			// 扫描
 			go s.scanDeviceByIp(ipCursor.String())
 		}
@@ -114,9 +112,11 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 				Port:     strconv.Itoa(port),
 				DeviceId: contentMap["deviceId"].(string),
 			}
-			s.scanResult[scanInfo.DeviceId] = scanInfo
-			log.Printf("discover new device, info:%s \n", scanInfo)
-			break
+			// 如果是本机，则不放入扫描结果中
+			if scanInfo.DeviceId != s.selfDeviceInfo.DeviceId {
+				s.scanResult[scanInfo.DeviceId] = scanInfo
+				log.Printf("discover new device, info:%s \n", scanInfo)
+			}
 		}
 		port++
 	}

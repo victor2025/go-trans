@@ -37,13 +37,15 @@ func InitServiceContext(config map[string]any) {
 		// 总线配置
 		busTopic := configService.GetOrDefault(consts.MsgBusTopic, "msg.bus")
 
+		deviceService := NewDeviceService(DB)
+
 		serviceContext = &ServiceContext{
 			ReceiveServerService: NewServerService(),
 			ConfigService:        configService,
 			SendTaskService:      NewTaskService(DB),
 			BusService:           NewBusService(busTopic),
-			DeviceService:        NewDeviceService(DB),
-			DeviceScanService:    NewDeviceScanService(),
+			DeviceService:        deviceService,
+			DeviceScanService:    NewDeviceScanService(deviceService.GetSelfDeviceInfo()),
 			DB:                   DB,
 		}
 	})
