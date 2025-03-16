@@ -34,6 +34,18 @@ func pairNewDevice(c *gin.Context) {
 	response.NewSuccessResponse(c, "success")
 }
 
+// 移除已配对的设备
+func removePairedDevice(c *gin.Context) {
+	deviceId := c.PostForm("deviceId")
+	deviceInfo := services.GetServiceContext().DeviceService.GetConnectedDeviceById(deviceId)
+	err := services.GetServiceContext().DeviceService.DisconnectDeviceById(deviceInfo)
+	if err != nil {
+		response.NewFailResponse(c, deviceId, err.Error())
+		return
+	}
+	response.NewSuccessResponse(c, "success")
+}
+
 func refreshPairCode(c *gin.Context) {
 	err := services.GetServiceContext().DeviceService.RefreshSelfPairCode()
 	if err != nil {

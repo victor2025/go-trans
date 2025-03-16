@@ -54,6 +54,15 @@ func (s *DeviceService) GetDeviceById(deviceId string) *entity.DeviceInfo {
 	return deviceInfo
 }
 
+func (s *DeviceService) DisconnectDeviceById(deviceInfo *entity.DeviceInfo) error {
+	if deviceInfo == nil {
+		return nil
+	}
+	deviceInfo.Connected = false
+	tx := s.db.Model(&entity.DeviceInfo{}).Where("device_id = ?", deviceInfo.DeviceId).Updates(deviceInfo)
+	return tx.Error
+}
+
 func (s *DeviceService) UpdateDeviceById(deviceInfo *entity.DeviceInfo) bool {
 	tx := s.db.Model(&entity.DeviceInfo{}).Where("device_id = ?", deviceInfo.DeviceId).Updates(deviceInfo)
 	return tx.RowsAffected > 0
