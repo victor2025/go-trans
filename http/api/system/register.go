@@ -13,4 +13,5 @@ func RegisterRouter(router *gin.RouterGroup) {
 	router.POST("/stopTransmitServer", stopTransmitServer)
 	// settings
 	router.POST("/updateSetting", updateSetting)
+	router.GET("/getSetting", getSetting)
 }

@@ -64,7 +64,7 @@ func (s *ServiceContext) StartReceiveServer() {
 	filePath := s.ConfigService.GetOrDefault(consts.TransServerFilepath, "./received")
 	portCh := make(chan string)
 	go s.ReceiveServerService.StartReceiveServer(port, filePath, portCh)
-	s.ConfigService.SetTempConfig(consts.DefaultTransmitPort, <-portCh)
+	s.ConfigService.SetTempConfig(consts.TransServerPort, <-portCh)
 }
 
 func (s *ServiceContext) StopReceiveServer() {

@@ -1,9 +1,10 @@
 package system
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-trans/http/response"
 	"go-trans/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 /**
@@ -23,6 +24,19 @@ func updateSetting(c *gin.Context) {
 		response.NewFailResponse(c, "", err.Error())
 		return
 	}
+	response.NewSuccessResponse(c, map[string]string{
+		"key":    key,
+		"config": config,
+	})
+}
+
+// 更新设置
+func getSetting(c *gin.Context) {
+	key := c.Query("key")
+	if key == "" {
+		panic("key or value is empty")
+	}
+	config := services.GetServiceContext().ConfigService.GetOrDefault(key, "")
 	response.NewSuccessResponse(c, map[string]string{
 		"key":    key,
 		"config": config,
