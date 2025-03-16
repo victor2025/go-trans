@@ -166,9 +166,10 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 			utils.HandleError(err)
 			contentMap := respEntity.Content.(map[string]interface{})
 			scanInfo := dto.DeviceScanInfo{
-				Ip:       ipAddr,
-				Port:     strconv.Itoa(port),
-				DeviceId: contentMap["deviceId"].(string),
+				Ip:         ipAddr,
+				Port:       strconv.Itoa(port),
+				DeviceId:   contentMap["deviceId"].(string),
+				DeviceName: contentMap["deviceName"].(string),
 			}
 			// 如果是本机，则不放入扫描结果中
 			if scanInfo.DeviceId != s.getSelfDeviceInfo().DeviceId {

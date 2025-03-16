@@ -52,7 +52,7 @@ func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 		deviceInfo = entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
 		s.db.Create(&deviceInfo)
 	}
-	deviceName := GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceId)
+	deviceName := GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceName)
 	deviceInfo.DeviceName = deviceName
 	return deviceInfo
 }
