@@ -1,10 +1,13 @@
 package device
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"go-trans/http/response"
 	"go-trans/pkg/models/consts"
+	"go-trans/pkg/models/entity"
 	"go-trans/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 /**
@@ -27,10 +30,15 @@ func ping(c *gin.Context) {
 // 用于配对
 func pair(c *gin.Context) {
 	validateParam(c)
-	deviceId := c.PostForm("deviceId")
-	deviceName := c.PostForm("deviceName")
+	deviceInfoStr := c.PostForm("deviceInfo")
+	var deviceInfo *entity.DeviceInfo
+	err := json.Unmarshal([]byte(deviceInfoStr), &deviceInfo)
 	pairCode := c.PostForm("pairCode")
-	err := services.GetServiceContext().DeviceService.PairDeviceForReceive(deviceId, deviceName, pairCode)
+	if err != nil {
+		response.NewFailResponse(c, "", "invalid device info: "+err.Error())
+		return
+	}
+	err = services.GetServiceContext().DeviceService.BePaired(deviceInfo, pairCode)
 	if err != nil {
 		response.NewFailResponse(c, "", err.Error())
 		return

@@ -14,4 +14,5 @@ const (
 	HttpServerPort      = "http.server.port"
 	ScanPortRetryCnt    = "scan.port.retry.cnt"
 	LogEnable           = "log.enable"
+	SelfDeviceName      = "self.device.name" // 本机名称
 )

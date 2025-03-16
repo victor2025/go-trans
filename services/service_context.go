@@ -45,7 +45,7 @@ func InitServiceContext(config map[string]any) {
 			SendTaskService:      NewTaskService(DB),
 			BusService:           NewBusService(busTopic),
 			DeviceService:        deviceService,
-			DeviceScanService:    NewDeviceScanService(deviceService.GetSelfDeviceInfo()),
+			DeviceScanService:    NewDeviceScanService(),
 			DB:                   DB,
 		}
 	})

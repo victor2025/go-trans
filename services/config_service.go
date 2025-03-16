@@ -1,10 +1,12 @@
 package services
 
 import (
+	"fmt"
 	"go-trans/pkg/models/entity"
 	"go-trans/utils"
 	"gorm.io/gorm"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -19,7 +21,7 @@ const (
 
 type ConfigService struct {
 	startupConfig map[string]any
-	configCache   map[string]string
+	configCache   sync.Map
 	db            *gorm.DB
 }
 
@@ -27,7 +29,7 @@ func NewConfigService(config map[string]any) *ConfigService {
 	startupConfig := make(map[string]any)
 	configService := &ConfigService{
 		startupConfig: startupConfig,
-		configCache:   make(map[string]string),
+		configCache:   sync.Map{},
 	}
 	// 从入参中读取配置
 	if config != nil {
@@ -62,8 +64,8 @@ func (c *ConfigService) GetOrDefaultFromStartupConfig(key, defaultVal string) st
 }
 
 func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
-	if c.configCache[key] != "" {
-		return c.configCache[key]
+	if val, _ := c.configCache.Load(key); val != nil {
+		return fmt.Sprint(val)
 	}
 	if c.db == nil {
 		return defaultVal
@@ -75,7 +77,7 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 		// 默认配置
 		configInfo = entity.GetNewConfigInfo(key, defaultVal)
 	}
-	c.configCache[key] = configInfo.ConfigValue
+	c.configCache.Store(key, configInfo.ConfigValue)
 	return configInfo.ConfigValue
 }
 
@@ -93,6 +95,6 @@ func (c *ConfigService) UpdateConfig(key, config string) error {
 	if err != nil {
 		return err
 	}
-	c.configCache[key] = configInfo.ConfigValue
+	c.configCache.Store(key, configInfo.ConfigValue)
 	return nil
 }

@@ -36,11 +36,10 @@ type DeviceScanService struct {
 	startTime      time.Time
 }
 
-func NewDeviceScanService(info *entity.DeviceInfo) *DeviceScanService {
+func NewDeviceScanService() *DeviceScanService {
 	processor := &DeviceScanService{
-		scanResult:     make(map[string]dto.DeviceScanInfo),
-		selfDeviceInfo: info,
-		sn:             0,
+		scanResult: make(map[string]dto.DeviceScanInfo),
+		sn:         0,
 	}
 	return processor
 }
@@ -53,6 +52,13 @@ func (s *DeviceScanService) StartScan(ipAddrs []string) {
 // StopScan 关闭正在进行的扫描任务
 func (s *DeviceScanService) StopScan() {
 	s.sn++
+}
+
+func (s *DeviceScanService) getSelfDeviceInfo() *entity.DeviceInfo {
+	if s.selfDeviceInfo == nil {
+		s.selfDeviceInfo = GetServiceContext().DeviceService.GetSelfDeviceInfo()
+	}
+	return s.selfDeviceInfo
 }
 
 // 扫描设备
@@ -165,7 +171,7 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 				DeviceId: contentMap["deviceId"].(string),
 			}
 			// 如果是本机，则不放入扫描结果中
-			if scanInfo.DeviceId != s.selfDeviceInfo.DeviceId {
+			if scanInfo.DeviceId != s.getSelfDeviceInfo().DeviceId {
 				s.scanResult[scanInfo.DeviceId] = scanInfo
 				log.Printf("discover new device, info:%s \n", scanInfo)
 			}
@@ -186,4 +192,11 @@ func (s *DeviceScanService) GetScanResults() ([]*dto.DeviceScanInfo, bool) {
 		results = append(results, &scanInfo)
 	}
 	return results, s.scanning
+}
+
+func (s *DeviceScanService) GetScanResultByDeviceId(deviceId string) *dto.DeviceScanInfo {
+	if result, ok := s.scanResult[deviceId]; ok {
+		return &result
+	}
+	return nil
 }

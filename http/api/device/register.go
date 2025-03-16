@@ -17,4 +17,8 @@ func RegisterRouter(router *gin.RouterGroup) {
 	router.POST("discovery/startScan", startScan)
 	router.POST("discovery/stopScan", stopScan)
 	router.GET("discovery/getScanResult", getScanResult)
+
+	// 本机信息
+	router.GET("self/getSelfDeviceInfo", getSelfDeviceInfo)
+	router.POST("self/pairNewDevice", pairNewDevice)
 }

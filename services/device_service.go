@@ -1,12 +1,19 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
+	"go-trans/http/response"
 	"go-trans/pkg/models/consts"
+	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
 	"go-trans/utils"
-	"gorm.io/gorm"
+	"io"
+	"net/http"
+	"net/url"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 /**
@@ -45,28 +52,79 @@ func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 		deviceInfo = entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
 		s.db.Create(&deviceInfo)
 	}
+	deviceName := GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceId)
+	deviceInfo.DeviceName = deviceName
 	return deviceInfo
 }
 
-// PairDeviceForReceive 以接收者的身份配对设备
-func (s *DeviceService) PairDeviceForReceive(deviceId, deviceName, pairCode string) error {
+// BePaired 以接收者的身份配对设备
+func (s *DeviceService) BePaired(deviceInfo *entity.DeviceInfo, pairCode string) error {
 	selfDeviceInfo := s.GetSelfDeviceInfo()
 	if selfDeviceInfo.PairCode != strings.ToLower(pairCode) {
 		return fmt.Errorf("invalid pair code")
 	}
-	strings.EqualFold(selfDeviceInfo.DeviceId, deviceId)
+	strings.EqualFold(selfDeviceInfo.DeviceId, deviceInfo.DeviceId)
 	var device *entity.DeviceInfo
-	device = s.GetConnectedDeviceById(deviceId)
+	device = s.GetConnectedDeviceById(deviceInfo.DeviceId)
 	if device == nil {
-		device = entity.GetNewReceiveDeviceInfo(deviceId, deviceName)
+		device = entity.GetNewReceiveDeviceInfo(deviceInfo.DeviceId, deviceInfo.DeviceName)
 	}
-	device.PairCode = pairCode
 	device.Connected = true
-	device.DeviceName = deviceName
 	err := s.db.Save(device).Error
 	utils.HandleError(err, utils.PanicOnError)
 	err = s.RefreshSelfPairCode()
 	utils.HandleError(err, utils.PanicOnError)
+	return nil
+}
+
+func (s *DeviceService) Pair(deviceScanInfo *dto.DeviceScanInfo, pairCode string) error {
+	ip := deviceScanInfo.Ip
+	port := deviceScanInfo.Port
+	deviceId := deviceScanInfo.DeviceId
+	// 构建请求
+	urlStr := fmt.Sprintf("http://%s:%s/device/inner/pair", ip, port)
+	selfDeviceInfo := s.GetSelfDeviceInfo()
+	deviceInfoBytes, err := json.Marshal(selfDeviceInfo)
+	utils.HandleError(err)
+
+	formData := url.Values{}
+	formData.Set("deviceInfo", string(deviceInfoBytes))
+	formData.Set("pairCode", pairCode)
+
+	request, err := http.NewRequest("POST", urlStr, strings.NewReader(formData.Encode()))
+	// 构建form数据
+	// 发送请求
+	utils.HandleError(err)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("source", consts.DeviceScanIdentityParam)
+
+	// 执行请求
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		return fmt.Errorf("failed to send pair request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 解析响应
+	body, err := io.ReadAll(resp.Body)
+	utils.HandleError(err)
+	respEntity := &response.Entity{}
+	err = json.Unmarshal(body, respEntity)
+	utils.HandleError(err)
+
+	if respEntity.Success != consts.YES {
+		return fmt.Errorf("pair failed: %v", respEntity.ErrMsg)
+	}
+
+	// 保存设备信息
+	device := s.GetConnectedDeviceById(deviceId)
+	if device == nil {
+		device = entity.GetNewSendDeviceInfo(deviceId, "")
+	}
+	device.Connected = true
+	err = s.db.Save(device).Error
+	utils.HandleError(err)
 	return nil
 }
 

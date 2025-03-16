@@ -14,13 +14,14 @@ import (
 // DeviceInfo 设备信息
 type DeviceInfo struct {
 	*BaseModel
-	DeviceId   string            `gorm:"index:idx_device_id" json:"device_id"`
-	DeviceName string            `gorm:"index" json:"device_name"`
-	Address    string            `json:"address"`
-	Port       string            `json:"port"`
-	Mode       consts.DeviceMode `gorm:"index:idx_device_mode" json:"mode"`
-	PairCode   string            `json:"pair_code"`
-	Connected  bool              `json:"connected"`
+	DeviceId     string            `gorm:"index:idx_device_id" json:"device_id"`
+	DeviceName   string            `gorm:"index" json:"device_name"`
+	Address      string            `json:"address"`
+	Port         string            `json:"port"`
+	TransmitPort string            `json:"transmit_port"`
+	Mode         consts.DeviceMode `gorm:"index:idx_device_mode" json:"mode"`
+	PairCode     string            `json:"pair_code"`
+	Connected    bool              `json:"connected"`
 }
 
 func GetNewDeviceInfo(address, port string, mode consts.DeviceMode) *DeviceInfo {
