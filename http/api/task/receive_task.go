@@ -23,19 +23,21 @@ func pageReceiveTasks(c *gin.Context) {
 	statusListStr := ""
 	if completed == consts.YES {
 		statusListStr = fmt.Sprintf("%d,%d", consts.Finished, consts.Fail)
-	} else {
+	} else if completed == consts.NO {
 		statusListStr = fmt.Sprintf("%d,%d", consts.Waiting, consts.Processing)
+	} else {
+		statusListStr = fmt.Sprintf("%d,%d,%d,%d", consts.Waiting, consts.Processing, consts.Finished, consts.Fail)
 	}
 	statusList := strings.Split(statusListStr, ",")
 	pageInt, _ := strconv.Atoi(page)
 	pageSize, _ := strconv.Atoi(size)
 
-	tasks, err := services.GetServiceContext().SendTaskService.GetSendTasks(pageInt, pageSize, statusList, "gmt_create DESC")
+	tasks, err := services.GetServiceContext().ReceiveTaskService.GetReceiveTasks(pageInt, pageSize, statusList, "gmt_create DESC")
 	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())
 	})
-	count, err := services.GetServiceContext().SendTaskService.CountSendTasks(statusList)
+	count, err := services.GetServiceContext().ReceiveTaskService.CountReceiveTasks(statusList)
 	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())

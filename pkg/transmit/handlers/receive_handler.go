@@ -183,6 +183,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 		return 0, fmt.Errorf("file md5 not match fileMd5:%s, actualMd5:%s", md5Val, rcvdMd5)
 	}
 	receiveTaskDto.Task.Progress = 1
+	receiveTaskDto.Task.Md5 = md5Val
 	receiveTaskDto.Task.Status = consts.Finished
 	s.callback(receiveTaskDto)
 	return dataSize, nil
