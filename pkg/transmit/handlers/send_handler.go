@@ -166,7 +166,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 		seq++
 		dataSize += n
 		progress := float32(dataSize) / float32(fileSize)
-		log.Printf("seq: %v, sent %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*progress)
+		//log.Printf("seq: %v, sent %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*progress)
 
 		// update status
 		s.updateTask(progress, "")

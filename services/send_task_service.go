@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"runtime/debug"
-	"strings"
 	"time"
 )
 
@@ -63,8 +62,15 @@ func (s *SendTaskService) GetSendTasks(page, size int, taskStatusList []string, 
 	}
 	offset := (page - 1) * size
 	var tasks []*entity.SendTaskInfo
-	tx := s.db.Order(order).Offset(offset).Limit(size).Find(&tasks, "status in ('?')", strings.Join(taskStatusList, "','"))
+	tx := s.db.Order(order).Offset(offset).Limit(size).Find(&tasks, "status in ?", taskStatusList)
 	return tasks, tx.Error
+}
+
+// CountSendTasks 统计满足条件的任务总数
+func (s *SendTaskService) CountSendTasks(taskStatusList []string) (int64, error) {
+	var count int64
+	tx := s.db.Model(&entity.SendTaskInfo{}).Where("status in ?", taskStatusList).Count(&count)
+	return count, tx.Error
 }
 
 // GetSendTaskDtos 取发送任务

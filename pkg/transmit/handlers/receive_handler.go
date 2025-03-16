@@ -111,7 +111,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 	var err error
 
 	// init file
-	file, fileSize, err := s.initFile(conn)
+	file, _, err := s.initFile(conn)
 	utils.HandleError(err)
 	if file == nil || err != nil {
 		log.Printf("WARN: init file failed, error:%s", err)
@@ -148,7 +148,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 		// show status
 		seq++
 		dataSize += int64(len(trans.Content))
-		log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
+		//log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
 
 	}
 

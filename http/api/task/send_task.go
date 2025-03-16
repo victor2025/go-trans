@@ -32,8 +32,11 @@ func createSendTask(c *gin.Context) {
 func pageSendTasks(c *gin.Context) {
 	page := c.Param("page")
 	size := c.Param("size")
-	statusListStr := c.Query("statusList")
-	if strings.TrimSpace(statusListStr) == "" {
+	completed := c.Query("completed")
+	statusListStr := ""
+	if completed == consts.YES {
+		statusListStr = fmt.Sprintf("%d,%d", consts.Finished, consts.Fail)
+	} else {
 		statusListStr = fmt.Sprintf("%d,%d", consts.Waiting, consts.Processing)
 	}
 	statusList := strings.Split(statusListStr, ",")
@@ -45,5 +48,13 @@ func pageSendTasks(c *gin.Context) {
 		response.NewFailResponse(c, "", err.Error())
 		panic(err.Error())
 	})
-	response.NewSuccessResponse(c, tasks)
+	count, err := services.GetServiceContext().SendTaskService.CountSendTasks(statusList)
+	utils.HandleError(err, func(args ...interface{}) {
+		response.NewFailResponse(c, "", err.Error())
+		panic(err.Error())
+	})
+	response.NewSuccessResponse(c, map[string]interface{}{
+		"tasks": tasks,
+		"count": count,
+	})
 }
