@@ -36,6 +36,7 @@ type ReceiveTaskInfo struct {
 	*BaseTaskInfo
 	Progress float32           `gorm:"index:idx_receive_progress_status" json:"progress"`
 	Status   consts.TaskStatus `gorm:"index:idx_receive_progress_status" json:"status"`
+	FileSize int64             `json:"fileSize"`
 	SenderId string            `gorm:"index:idx_sender" json:"senderId"`
 }
 
@@ -62,5 +63,16 @@ func GetNewSendTaskInfo(path, receiverId string) (*SendTaskInfo, error) {
 		},
 		ReceiverId: receiverId,
 		Status:     consts.Waiting,
+	}, nil
+}
+
+func GetNewReceiveTaskInfo() (*ReceiveTaskInfo, error) {
+	return &ReceiveTaskInfo{
+		BaseTaskInfo: &BaseTaskInfo{
+			BaseModel: GetNewBaseModel(),
+			FileType:  consts.File,
+			TaskId:    uuid.New().String(),
+		},
+		Status: consts.Waiting,
 	}, nil
 }

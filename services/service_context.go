@@ -16,6 +16,7 @@ type ServiceContext struct {
 	ReceiveServerService *TransmitService
 	ConfigService        *ConfigService
 	SendTaskService      *SendTaskService
+	ReceiveTaskService   *ReceiveTaskService
 	DeviceService        *DeviceService
 	DeviceScanService    *DeviceScanService
 	DB                   *gorm.DB
@@ -43,6 +44,7 @@ func InitServiceContext(config map[string]any) {
 			ReceiveServerService: NewServerService(),
 			ConfigService:        configService,
 			SendTaskService:      NewTaskService(DB),
+			ReceiveTaskService:   NewReceiveTaskService(DB),
 			BusService:           NewBusService(busTopic),
 			DeviceService:        deviceService,
 			DeviceScanService:    NewDeviceScanService(),

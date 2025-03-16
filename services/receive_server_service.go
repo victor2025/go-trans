@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"go-trans/pkg/models/dto"
 	"go-trans/pkg/transmit/handlers"
 	"go-trans/utils"
 	"log"
@@ -35,7 +36,10 @@ func (s *TransmitService) StartReceiveServer(port, basePath string, portCh chan 
 	if !s.receiveServerIsOn {
 		s.receiveServerIsOn = true
 		for retryCnt := 0; retryCnt < 10; retryCnt++ {
-			s.receiveHandler = handlers.NewReceiveHandler(strconv.Itoa(s.ServerPort), basePath)
+			s.receiveHandler = handlers.NewReceiveHandler(strconv.Itoa(s.ServerPort), basePath, func(dto *dto.ReceiveTaskDto) {
+				err := serviceContext.BusService.PostMsg(dto)
+				utils.HandleError(err)
+			})
 			func() {
 				defer func() {
 					if r := recover(); r != nil {

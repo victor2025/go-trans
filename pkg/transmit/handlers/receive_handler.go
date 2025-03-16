@@ -5,6 +5,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"go-trans/pkg/models/consts"
+	"go-trans/pkg/models/dto"
+	"go-trans/pkg/models/entity"
 	"go-trans/pkg/transmit/protocols"
 	"go-trans/utils"
 	"log"
@@ -20,14 +23,16 @@ type ReceiveHandler struct {
 	basePath string
 	listener net.Listener
 	isOn     bool
+	callback func(dto *dto.ReceiveTaskDto)
 }
 
-func NewReceiveHandler(port, basePath string) *ReceiveHandler {
+func NewReceiveHandler(port, basePath string, callback func(dto *dto.ReceiveTaskDto)) *ReceiveHandler {
 	path, err := filepath.Abs(basePath)
 	utils.HandleError(err, utils.ExitOnErr)
 	return &ReceiveHandler{
 		port:     port,
 		basePath: path + "/",
+		callback: callback,
 	}
 }
 
@@ -110,8 +115,15 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 	start := time.Now()
 	var err error
 
+	// 创建接收任务
+	info, _ := entity.GetNewReceiveTaskInfo()
+	receiveTaskDto := &dto.ReceiveTaskDto{
+		Task: info,
+	}
+	s.callback(receiveTaskDto)
+
 	// init file
-	file, _, err := s.initFile(conn)
+	file, fileSize, err := s.initFile(conn, receiveTaskDto)
 	utils.HandleError(err)
 	if file == nil || err != nil {
 		log.Printf("WARN: init file failed, error:%s", err)
@@ -149,7 +161,13 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 		seq++
 		dataSize += int64(len(trans.Content))
 		//log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
-
+		progress := 100 * float32(dataSize) / float32(fileSize)
+		receiveTaskDto.Task.Progress = progress
+		dataSizeMB := dataSize / (1024 * 1024)
+		if dataSizeMB%10 == 0 {
+			// 每10MB刷新一次状态
+			s.callback(receiveTaskDto)
+		}
 	}
 
 	// show end status
@@ -164,11 +182,14 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 		log.Printf("WARN: File md5Val is different, please check manually!")
 		return 0, fmt.Errorf("file md5 not match fileMd5:%s, actualMd5:%s", md5Val, rcvdMd5)
 	}
+	receiveTaskDto.Task.Progress = 1
+	receiveTaskDto.Task.Status = consts.Finished
+	s.callback(receiveTaskDto)
 	return dataSize, nil
 }
 
 // 初始化文件
-func (r *ReceiveHandler) initFile(conn net.Conn) (*os.File, int64, error) {
+func (r *ReceiveHandler) initFile(conn net.Conn, taskDto *dto.ReceiveTaskDto) (*os.File, int64, error) {
 	var err error
 
 	// read filename trans msg
@@ -208,6 +229,13 @@ func (r *ReceiveHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 	}
 	fileSize, _ := binary.Varint(trans.Content)
 	log.Printf("Total size : %d bytes", fileSize)
+
+	// 更新任务状态
+	taskDto.Task.FileName = filename
+	taskDto.Task.FilePath = path
+	taskDto.Task.FileSize = fileSize
+	taskDto.Task.Status = consts.Processing
+	r.callback(taskDto)
 
 	return file, fileSize, nil
 }
