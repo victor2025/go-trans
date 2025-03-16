@@ -29,6 +29,13 @@ func createSendTask(c *gin.Context) {
 	response.NewSuccessResponse(c, "success")
 }
 
+func deleteSendTask(c *gin.Context) {
+	taskId := c.PostForm("taskId")
+	err := services.GetServiceContext().SendTaskService.DeleteSendTask(taskId)
+	utils.HandleError(err, utils.PanicOnError)
+	response.NewSuccessResponse(c, "success")
+}
+
 func pageSendTasks(c *gin.Context) {
 	page := c.Param("page")
 	size := c.Param("size")

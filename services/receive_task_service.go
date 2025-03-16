@@ -3,7 +3,6 @@ package services
 import (
 	"go-trans/pkg/models/entity"
 	"gorm.io/gorm"
-	"log"
 )
 
 /*
@@ -28,7 +27,7 @@ func (s *ReceiveTaskService) UpdateReceiveTask(info *entity.ReceiveTaskInfo) err
 	if tx.Error != nil {
 		return tx.Error
 	}
-	log.Printf("update receive task success, taskId: %s, status: %v", info.TaskId, info.Status)
+	InfoF("update receive task success, taskId: %s, status: %v", info.TaskId, info.Status)
 	return nil
 }
 
@@ -48,4 +47,9 @@ func (s *ReceiveTaskService) CountReceiveTasks(taskStatusList []string) (int64, 
 	var count int64
 	tx := s.db.Model(&entity.SendTaskInfo{}).Where("status in ?", taskStatusList).Count(&count)
 	return count, tx.Error
+}
+
+func (s *ReceiveTaskService) DeleteReceiveTask(taskId string) error {
+	tx := s.db.Delete(&entity.ReceiveTaskInfo{}, "task_id = ?", taskId)
+	return tx.Error
 }

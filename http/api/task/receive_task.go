@@ -47,3 +47,10 @@ func pageReceiveTasks(c *gin.Context) {
 		"count": count,
 	})
 }
+
+func deleteReceiveTask(c *gin.Context) {
+	taskId := c.PostForm("taskId")
+	err := services.GetServiceContext().ReceiveTaskService.DeleteReceiveTask(taskId)
+	utils.HandleError(err, utils.PanicOnError)
+	response.NewSuccessResponse(c, "success")
+}

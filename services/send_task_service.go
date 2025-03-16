@@ -51,8 +51,13 @@ func (s *SendTaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
-	log.Printf("update send task success, taskId: %s, status: %v", info.TaskId, info.Status)
+	InfoF("update send task success, taskId: %s, status: %v", info.TaskId, info.Status)
 	return nil
+}
+
+func (s *SendTaskService) DeleteSendTask(taskId string) error {
+	tx := s.db.Delete(&entity.SendTaskInfo{}, "task_id=?", taskId)
+	return tx.Error
 }
 
 // GetSendTasks 按页查询任务列表

@@ -10,7 +10,10 @@ import "github.com/gin-gonic/gin"
 func RegisterRouter(router *gin.RouterGroup) {
 	// send
 	router.POST("/createSendTask", createSendTask)
+	router.POST("/deleteSendTask", deleteSendTask)
 	router.GET("/pageSendTasks/:page/:size", pageSendTasks)
 	// receive
 	router.GET("/pageReceiveTasks/:page/:size", pageReceiveTasks)
+	router.POST("/deleteReceiveTask", deleteReceiveTask)
+
 }
