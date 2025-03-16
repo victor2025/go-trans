@@ -146,7 +146,7 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 	InfoF("scanDeviceByIp for: %v\n", ipAddr)
 	currSn := s.sn
 	httpClient := &http.Client{}
-	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
+	portStr := GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, consts.DefaultHttpPort)
 	port, _ := strconv.Atoi(portStr)
 	totalRetryCntStr := GetServiceContext().ConfigService.GetOrDefault(consts.ScanPortRetryCnt, "3")
 	totalRetryCnt, _ := strconv.Atoi(totalRetryCntStr)

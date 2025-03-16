@@ -28,7 +28,7 @@ func NewServerService() *TransmitService {
 }
 
 // StartReceiveServer startup server
-func (s *TransmitService) StartReceiveServer(port, basePath string) {
+func (s *TransmitService) StartReceiveServer(port, basePath string, portCh chan string) {
 	var err error
 	s.ServerPort, err = strconv.Atoi(port)
 	utils.HandleError(err, utils.PanicOnError)
@@ -43,7 +43,7 @@ func (s *TransmitService) StartReceiveServer(port, basePath string) {
 						err = fmt.Errorf("%v", r)
 					}
 				}()
-				s.receiveHandler.Handle()
+				s.receiveHandler.Handle(portCh)
 			}()
 			if err == nil {
 				break

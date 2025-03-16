@@ -30,6 +30,12 @@ func ping(c *gin.Context) {
 // 用于配对
 func pair(c *gin.Context) {
 	validateParam(c)
+	// 获取请求者的ip地址
+	clientIp := c.ClientIP()
+	if clientIp == "" {
+		response.NewFailResponse(c, "", "无法获取客户端IP地址")
+		return
+	}
 	deviceInfoStr := c.PostForm("deviceInfo")
 	var deviceInfo *entity.DeviceInfo
 	err := json.Unmarshal([]byte(deviceInfoStr), &deviceInfo)
@@ -38,17 +44,19 @@ func pair(c *gin.Context) {
 		response.NewFailResponse(c, "", "invalid device info: "+err.Error())
 		return
 	}
+	// 设置clientIP
+	deviceInfo.Address = clientIp
 	err = services.GetServiceContext().DeviceService.BePaired(deviceInfo, pairCode)
 	if err != nil {
 		response.NewFailResponse(c, "", err.Error())
 		return
 	}
 	// 返回port
-	transServerPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, "20235")
+	transmitPort := services.GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, consts.DefaultHttpPort)
 	selfDeviceInfo := services.GetServiceContext().DeviceService.GetSelfDeviceInfo()
 	response.NewSuccessResponse(c, &map[string]string{
-		"deviceId":        selfDeviceInfo.DeviceId,
-		"transServerPort": transServerPort,
+		"deviceId":     selfDeviceInfo.DeviceId,
+		"transmitPort": transmitPort,
 	})
 }
 

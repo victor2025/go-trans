@@ -9,3 +9,8 @@ const (
 	YES = "y"
 	NO  = "n"
 )
+
+const (
+	DefaultHttpPort     = "9210"
+	DefaultTransmitPort = "20235"
+)

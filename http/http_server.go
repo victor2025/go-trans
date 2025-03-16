@@ -29,8 +29,9 @@ var httpServer *http.Server
 
 // StartHttpServer 启动http服务器
 func StartHttpServer() int {
+	configService := services.GetServiceContext().ConfigService
 	engine := initGinEngine()
-	portStr := services.GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, "9210")
+	portStr := configService.GetOrDefault(consts.HttpServerPort, consts.DefaultHttpPort)
 	port, _ := strconv.Atoi(portStr)
 	httpServer = &http.Server{
 		Handler: engine,
@@ -47,6 +48,7 @@ func StartHttpServer() int {
 			if err == nil {
 				// 发送绑定的端口
 				portChan <- port
+				configService.SetTempConfig(consts.HttpServerPort, consts.DefaultHttpPort)
 				err = httpServer.Serve(listener)
 				if errors.Is(err, http.ErrServerClosed) {
 					break

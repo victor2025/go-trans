@@ -31,11 +31,11 @@ func NewReceiveHandler(port, basePath string) *ReceiveHandler {
 	}
 }
 
-func (s *ReceiveHandler) Handle() {
+func (s *ReceiveHandler) Handle(portCh chan string) {
 	log.Printf("try to start receive server at port %s", s.port)
 	// 开启服务
 	s.startServer()
-
+	portCh <- s.port
 	// 循环处理请求
 	for {
 		isNormal := true

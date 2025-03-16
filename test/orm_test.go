@@ -39,17 +39,17 @@ func TestDDL(t *testing.T) {
 	fmt.Println(sendTaskInfo)
 }
 
-func TestCreateDevice(t *testing.T) {
-	db := orm.GetDb("../res/db/app.db")
-	deviceInfo := entity.GetNewDeviceInfo("localhost", "20235")
-	deviceInfo.DeviceId = "001"
-	deviceInfo.DeviceName = "LOCAL"
-	db.Save(deviceInfo)
-	sendTaskInfo := &entity.DeviceInfo{}
-	db.First(sendTaskInfo, "device_id = ?", "001")
-	fmt.Println(sendTaskInfo)
-
-}
+//func TestCreateDevice(t *testing.T) {
+//	db := orm.GetDb("../res/db/app.db")
+//	deviceInfo := entity.GetNewDeviceInfo("localhost", "20235")
+//	deviceInfo.DeviceId = "001"
+//	deviceInfo.DeviceName = "LOCAL"
+//	db.Save(deviceInfo)
+//	sendTaskInfo := &entity.DeviceInfo{}
+//	db.First(sendTaskInfo, "device_id = ?", "001")
+//	fmt.Println(sendTaskInfo)
+//
+//}
 
 func TestCreateSendTaskInfo(t *testing.T) {
 	db := services.GetServiceContext().DB

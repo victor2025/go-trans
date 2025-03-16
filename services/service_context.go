@@ -60,9 +60,11 @@ func GetServiceContext() *ServiceContext {
 }
 
 func (s *ServiceContext) StartReceiveServer() {
-	port := s.ConfigService.GetOrDefault(consts.TransServerPort, "20235")
+	port := s.ConfigService.GetOrDefault(consts.TransServerPort, consts.DefaultTransmitPort)
 	filePath := s.ConfigService.GetOrDefault(consts.TransServerFilepath, "./received")
-	go s.ReceiveServerService.StartReceiveServer(port, filePath)
+	portCh := make(chan string)
+	go s.ReceiveServerService.StartReceiveServer(port, filePath, portCh)
+	s.ConfigService.SetTempConfig(consts.DefaultTransmitPort, <-portCh)
 }
 
 func (s *ServiceContext) StopReceiveServer() {

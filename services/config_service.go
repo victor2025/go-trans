@@ -81,6 +81,11 @@ func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
 	return configInfo.ConfigValue
 }
 
+// SetTempConfig 设置临时参数
+func (c *ConfigService) SetTempConfig(key, val string) {
+	c.configCache.Store(key, val)
+}
+
 // UpdateConfig 更新配置
 func (c *ConfigService) UpdateConfig(key, config string) error {
 	var configInfo *entity.ConfigInfo

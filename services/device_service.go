@@ -84,6 +84,9 @@ func (s *DeviceService) Pair(deviceScanInfo *dto.DeviceScanInfo, pairCode string
 	// 构建请求
 	urlStr := fmt.Sprintf("http://%s:%s/device/inner/pair", ip, port)
 	selfDeviceInfo := s.GetSelfDeviceInfo()
+	// 补充端口号
+	selfDeviceInfo.Port = GetServiceContext().ConfigService.GetOrDefault(consts.HttpServerPort, consts.DefaultHttpPort)
+	selfDeviceInfo.TransmitPort = GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, consts.DefaultHttpPort)
 	deviceInfoBytes, err := json.Marshal(selfDeviceInfo)
 	utils.HandleError(err)
 
