@@ -33,3 +33,11 @@ func pairNewDevice(c *gin.Context) {
 	}
 	response.NewSuccessResponse(c, "success")
 }
+
+func refreshPairCode(c *gin.Context) {
+	err := services.GetServiceContext().DeviceService.RefreshSelfPairCode()
+	if err != nil {
+		response.NewFailResponse(c, "refresh pair code", err.Error())
+	}
+	response.NewSuccessResponse(c, "success")
+}

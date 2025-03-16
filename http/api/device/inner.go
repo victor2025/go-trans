@@ -21,8 +21,9 @@ func ping(c *gin.Context) {
 	validateParam(c)
 	selfDeviceInfo := services.GetServiceContext().DeviceService.GetSelfDeviceInfo()
 	returnObj := map[string]string{
-		"deviceId":   selfDeviceInfo.DeviceId,
-		"deviceName": selfDeviceInfo.DeviceName,
+		"deviceId":     selfDeviceInfo.DeviceId,
+		"deviceName":   selfDeviceInfo.DeviceName,
+		"transmitPort": selfDeviceInfo.TransmitPort,
 	}
 	response.NewSuccessResponse(c, returnObj)
 }

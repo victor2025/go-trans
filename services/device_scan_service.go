@@ -29,7 +29,7 @@ const (
 
 // DeviceScanService 设备扫描处理器
 type DeviceScanService struct {
-	scanResult     map[string]dto.DeviceScanInfo
+	scanResult     sync.Map
 	selfDeviceInfo *entity.DeviceInfo
 	sn             int
 	scanning       bool
@@ -38,8 +38,7 @@ type DeviceScanService struct {
 
 func NewDeviceScanService() *DeviceScanService {
 	processor := &DeviceScanService{
-		scanResult: make(map[string]dto.DeviceScanInfo),
-		sn:         0,
+		sn: 0,
 	}
 	return processor
 }
@@ -67,7 +66,7 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 	s.StopScan()
 	s.scanning = true
 	s.startTime = time.Now()
-	s.scanResult = make(map[string]dto.DeviceScanInfo)
+	s.scanResult = sync.Map{}
 	defer func() {
 		if r := recover(); r != nil {
 			InfoF("scanDevice error:%s \n", r)
@@ -93,8 +92,13 @@ func (s *DeviceScanService) scanDevice(ipAddrs []string) {
 	}
 	wg.Wait()
 	// 还原状态
+	var count int
+	s.scanResult.Range(func(key, value interface{}) bool {
+		count++
+		return true
+	})
 	log.Printf("scanDevice finished, discover %d devices, costTime:%.2fs",
-		len(s.scanResult), time.Since(s.startTime).Seconds())
+		count, time.Since(s.startTime).Seconds())
 	s.scanning = false
 }
 
@@ -166,14 +170,15 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 			utils.HandleError(err)
 			contentMap := respEntity.Content.(map[string]interface{})
 			scanInfo := dto.DeviceScanInfo{
-				Ip:         ipAddr,
-				Port:       strconv.Itoa(port),
-				DeviceId:   contentMap["deviceId"].(string),
-				DeviceName: contentMap["deviceName"].(string),
+				Ip:           ipAddr,
+				Port:         strconv.Itoa(port),
+				TransmitPort: contentMap["transmitPort"].(string),
+				DeviceId:     contentMap["deviceId"].(string),
+				DeviceName:   contentMap["deviceName"].(string),
 			}
 			// 如果是本机，则不放入扫描结果中
 			if scanInfo.DeviceId != s.getSelfDeviceInfo().DeviceId {
-				s.scanResult[scanInfo.DeviceId] = scanInfo
+				s.saveScanResult(&scanInfo)
 				log.Printf("discover new device, info:%s \n", scanInfo)
 			}
 		}
@@ -184,20 +189,37 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 			break
 		}
 	}
+}
 
+func (s *DeviceScanService) saveScanResult(scanInfo *dto.DeviceScanInfo) {
+	// 查询当前设备是否已连接
+	deviceInfo := GetServiceContext().DeviceService.GetConnectedDeviceById(scanInfo.DeviceId)
+	if deviceInfo != nil {
+		// 若设备已连接，则更新设备信息
+		deviceInfo.DeviceName = scanInfo.DeviceName
+		deviceInfo.Address = scanInfo.Ip
+		deviceInfo.Port = scanInfo.Port
+		deviceInfo.TransmitPort = scanInfo.TransmitPort
+		GetServiceContext().DeviceService.UpdateDeviceById(deviceInfo)
+		scanInfo.Connected = consts.YES
+	}
+	s.scanResult.Store(scanInfo.DeviceId, scanInfo)
 }
 
 func (s *DeviceScanService) GetScanResults() ([]*dto.DeviceScanInfo, bool) {
 	results := make([]*dto.DeviceScanInfo, 0)
-	for _, scanInfo := range s.scanResult {
-		results = append(results, &scanInfo)
-	}
+	s.scanResult.Range(func(key, value interface{}) bool {
+		scanInfo := value.(*dto.DeviceScanInfo)
+		results = append(results, scanInfo)
+		return true
+	})
 	return results, s.scanning
 }
 
 func (s *DeviceScanService) GetScanResultByDeviceId(deviceId string) *dto.DeviceScanInfo {
-	if result, ok := s.scanResult[deviceId]; ok {
-		return &result
+	if value, ok := s.scanResult.Load(deviceId); ok {
+		scanInfo := value.(dto.DeviceScanInfo)
+		return &scanInfo
 	}
 	return nil
 }

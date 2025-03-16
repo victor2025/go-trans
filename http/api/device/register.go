@@ -21,4 +21,5 @@ func RegisterRouter(router *gin.RouterGroup) {
 	// 本机信息
 	router.GET("self/getSelfDeviceInfo", getSelfDeviceInfo)
 	router.POST("self/pairNewDevice", pairNewDevice)
+	router.POST("self/refreshPairCode", refreshPairCode)
 }

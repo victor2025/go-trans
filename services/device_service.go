@@ -43,6 +43,11 @@ func (s *DeviceService) GetConnectedDeviceById(deviceId string) *entity.DeviceIn
 	return deviceInfo
 }
 
+func (s *DeviceService) UpdateDeviceById(deviceInfo *entity.DeviceInfo) bool {
+	tx := s.db.Model(&entity.DeviceInfo{}).Where("device_id = ?", deviceInfo.DeviceId).Updates(deviceInfo)
+	return tx.RowsAffected > 0
+}
+
 // GetSelfDeviceInfo 查询自身设备信息
 func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 	var deviceInfo *entity.DeviceInfo
@@ -52,8 +57,8 @@ func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 		deviceInfo = entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
 		s.db.Create(&deviceInfo)
 	}
-	deviceName := GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceName)
-	deviceInfo.DeviceName = deviceName
+	deviceInfo.DeviceName = GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceName)
+	deviceInfo.TransmitPort = GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, consts.DefaultTransmitPort)
 	return deviceInfo
 }
 
@@ -71,8 +76,6 @@ func (s *DeviceService) BePaired(deviceInfo *entity.DeviceInfo, pairCode string)
 	}
 	device.Connected = true
 	err := s.db.Save(device).Error
-	utils.HandleError(err, utils.PanicOnError)
-	err = s.RefreshSelfPairCode()
 	utils.HandleError(err, utils.PanicOnError)
 	return nil
 }
