@@ -43,6 +43,17 @@ func (s *DeviceService) GetConnectedDeviceById(deviceId string) *entity.DeviceIn
 	return deviceInfo
 }
 
+// GetDeviceById 根据id查询已连接设备
+func (s *DeviceService) GetDeviceById(deviceId string) *entity.DeviceInfo {
+	var deviceInfo *entity.DeviceInfo
+	tx := s.db.Find(&deviceInfo, "device_id = ?", deviceId)
+	utils.HandleError(tx.Error)
+	if tx.RowsAffected == 0 {
+		return nil
+	}
+	return deviceInfo
+}
+
 func (s *DeviceService) UpdateDeviceById(deviceInfo *entity.DeviceInfo) bool {
 	tx := s.db.Model(&entity.DeviceInfo{}).Where("device_id = ?", deviceInfo.DeviceId).Updates(deviceInfo)
 	return tx.RowsAffected > 0
@@ -124,10 +135,17 @@ func (s *DeviceService) Pair(deviceScanInfo *dto.DeviceScanInfo, pairCode string
 	}
 
 	// 保存设备信息
-	device := s.GetConnectedDeviceById(deviceId)
+	device := s.GetDeviceById(deviceId)
 	if device == nil {
-		device = entity.GetNewSendDeviceInfo(deviceId, "")
+		device = &entity.DeviceInfo{
+			DeviceId: deviceId,
+		}
 	}
+	device.DeviceName = deviceScanInfo.DeviceName
+	device.Address = deviceScanInfo.Ip
+	device.Port = deviceScanInfo.Port
+	device.TransmitPort = deviceScanInfo.TransmitPort
+	device.PairCode = pairCode
 	device.Connected = true
 	err = s.db.Save(device).Error
 	utils.HandleError(err)

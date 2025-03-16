@@ -1,7 +1,9 @@
 package response
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"go-trans/utils"
 	"net/http"
 )
 
@@ -29,4 +31,11 @@ func NewSuccessResponse(c *gin.Context, data any) {
 
 func NewFailResponse(c *gin.Context, data any, errMsg string) {
 	c.JSON(http.StatusInternalServerError, Entity{Success: fail, Content: data, ErrMsg: errMsg})
+}
+
+func GetStructFromResponse(entity *Entity, target any) {
+	marshal, err := json.Marshal(entity.Content)
+	utils.HandleError(err)
+	err = json.Unmarshal(marshal, target)
+	utils.HandleError(err)
 }

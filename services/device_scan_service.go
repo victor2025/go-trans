@@ -168,13 +168,14 @@ func (s *DeviceScanService) scanDeviceByIp(ipAddr string) {
 			respEntity := &response.Entity{}
 			err := json.Unmarshal(body, respEntity)
 			utils.HandleError(err)
-			contentMap := respEntity.Content.(map[string]interface{})
+			deviceInfo := &entity.DeviceInfo{}
+			response.GetStructFromResponse(respEntity, deviceInfo)
 			scanInfo := dto.DeviceScanInfo{
 				Ip:           ipAddr,
 				Port:         strconv.Itoa(port),
-				TransmitPort: contentMap["transmitPort"].(string),
-				DeviceId:     contentMap["deviceId"].(string),
-				DeviceName:   contentMap["deviceName"].(string),
+				TransmitPort: deviceInfo.TransmitPort,
+				DeviceId:     deviceInfo.DeviceId,
+				DeviceName:   deviceInfo.DeviceName,
 			}
 			// 如果是本机，则不放入扫描结果中
 			if scanInfo.DeviceId != s.getSelfDeviceInfo().DeviceId {
@@ -210,6 +211,7 @@ func (s *DeviceScanService) GetScanResults() ([]*dto.DeviceScanInfo, bool) {
 	results := make([]*dto.DeviceScanInfo, 0)
 	s.scanResult.Range(func(key, value interface{}) bool {
 		scanInfo := value.(*dto.DeviceScanInfo)
+		completeConnectStatus(scanInfo)
 		results = append(results, scanInfo)
 		return true
 	})
@@ -218,8 +220,19 @@ func (s *DeviceScanService) GetScanResults() ([]*dto.DeviceScanInfo, bool) {
 
 func (s *DeviceScanService) GetScanResultByDeviceId(deviceId string) *dto.DeviceScanInfo {
 	if value, ok := s.scanResult.Load(deviceId); ok {
-		scanInfo := value.(dto.DeviceScanInfo)
-		return &scanInfo
+		scanInfo := value.(*dto.DeviceScanInfo)
+		completeConnectStatus(scanInfo)
+		return scanInfo
 	}
 	return nil
+}
+
+// 补全连接信息
+func completeConnectStatus(scanInfo *dto.DeviceScanInfo) {
+	deviceInfo := GetServiceContext().DeviceService.GetDeviceById(scanInfo.DeviceId)
+	if deviceInfo != nil && deviceInfo.Connected {
+		scanInfo.Connected = consts.YES
+	} else {
+		scanInfo.Connected = consts.NO
+	}
 }
