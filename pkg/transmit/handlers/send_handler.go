@@ -198,8 +198,8 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 }
 
 func (s *SendHandler) invokeCallback() {
-	// 创建一个时间间隔为 200ms 的 runner
-	ticker := time.NewTicker(200 * time.Millisecond)
+	// 创建一个时间间隔为 500ms 的 runner
+	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop() // 确保在退出时停止 runner
 	for range ticker.C {
 		s.callback(&s.sendTaskDto)
