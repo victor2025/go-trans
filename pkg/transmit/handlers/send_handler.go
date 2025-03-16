@@ -34,7 +34,7 @@ type SendHandler struct {
 func NewSendHandler(sendTaskDto *dto.SendTaskDto, callback func(*dto.SendTaskDto)) *SendHandler {
 	return &SendHandler{
 		addr:        sendTaskDto.Device.Address,
-		port:        sendTaskDto.Device.Port,
+		port:        sendTaskDto.Device.TransmitPort,
 		path:        sendTaskDto.Task.FilePath,
 		sendTaskDto: *sendTaskDto,
 		callback:    callback,
