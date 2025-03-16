@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -56,13 +57,13 @@ func (s *SendTaskService) UpdateSendTask(info *entity.SendTaskInfo) error {
 }
 
 // GetSendTasks 按页查询任务列表
-func (s *SendTaskService) GetSendTasks(page, size int, order string) ([]*entity.SendTaskInfo, error) {
+func (s *SendTaskService) GetSendTasks(page, size int, taskStatusList []string, order string) ([]*entity.SendTaskInfo, error) {
 	if order == "" {
-		order = "id ASC"
+		order = "gmt_create ASC"
 	}
 	offset := (page - 1) * size
 	var tasks []*entity.SendTaskInfo
-	tx := s.db.Order(order).Offset(offset).Limit(size).Find(&tasks)
+	tx := s.db.Order(order).Offset(offset).Limit(size).Find(&tasks, "status in ('?')", strings.Join(taskStatusList, "','"))
 	return tasks, tx.Error
 }
 
