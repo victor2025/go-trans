@@ -77,7 +77,7 @@ func (s *DeviceService) GetSelfDeviceInfo() *entity.DeviceInfo {
 		deviceInfo = entity.GetNewDeviceInfo("localhost", "", consts.SelfMode)
 		s.db.Create(&deviceInfo)
 	}
-	deviceInfo.DeviceName = GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, deviceInfo.DeviceName)
+	deviceInfo.DeviceName = GetServiceContext().ConfigService.GetOrDefault(consts.SelfDeviceName, strings.ToUpper(deviceInfo.DeviceName[0:10]))
 	deviceInfo.TransmitPort = GetServiceContext().ConfigService.GetOrDefault(consts.TransServerPort, consts.DefaultTransmitPort)
 	return deviceInfo
 }
