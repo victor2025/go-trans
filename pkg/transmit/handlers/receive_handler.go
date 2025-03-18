@@ -161,7 +161,7 @@ func (s *ReceiveHandler) receiveNewFile(conn net.Conn) (int64, error) {
 		seq++
 		dataSize += int64(len(trans.Content))
 		//log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
-		progress := 100 * float32(dataSize) / float32(fileSize)
+		progress := float32(dataSize) / float32(fileSize)
 		receiveTaskDto.Task.Progress = progress
 		dataSizeMB := dataSize / (1024 * 1024)
 		if dataSizeMB%10 == 0 {

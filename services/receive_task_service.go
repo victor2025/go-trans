@@ -45,7 +45,7 @@ func (s *ReceiveTaskService) GetReceiveTasks(page, size int, taskStatusList []st
 // CountReceiveTasks 统计满足条件的任务总数
 func (s *ReceiveTaskService) CountReceiveTasks(taskStatusList []string) (int64, error) {
 	var count int64
-	tx := s.db.Model(&entity.SendTaskInfo{}).Where("status in ?", taskStatusList).Count(&count)
+	tx := s.db.Model(&entity.ReceiveTaskInfo{}).Where("status in ?", taskStatusList).Count(&count)
 	return count, tx.Error
 }
 

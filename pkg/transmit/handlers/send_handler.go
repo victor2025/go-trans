@@ -150,7 +150,7 @@ func (s *SendHandler) sendFile(conn net.Conn, fileRelativePath string) (int64, e
 			if err == io.EOF {
 				break
 			}
-			utils.HandleError(err)
+			utils.HandleError(err, utils.PanicOnError)
 		}
 
 		// send to conn
@@ -226,4 +226,6 @@ func (s *SendHandler) markTaskFail(errMsg string) {
 	s.sendTaskDto.Task.Status = consts.Fail
 	s.sendTaskDto.Task.ErrorMsg = errMsg
 	s.isDone = true
+	s.callback(&s.sendTaskDto)
+	log.Printf("send task fail: %v", errMsg)
 }

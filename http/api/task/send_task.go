@@ -19,7 +19,7 @@ import (
 
 func createSendTask(c *gin.Context) {
 	path := c.PostForm("path")
-	receiver := c.PostForm("receiver")
+	receiver := c.PostForm("deviceId")
 	err := services.GetServiceContext().SendTaskService.CreateSendTask(path, receiver)
 	utils.HandleError(err, func(args ...interface{}) {
 		response.NewFailResponse(c, "", err.Error())

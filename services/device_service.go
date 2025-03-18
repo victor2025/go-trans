@@ -94,6 +94,9 @@ func (s *DeviceService) BePaired(deviceInfo *entity.DeviceInfo, pairCode string)
 	if device == nil {
 		device = entity.GetNewReceiveDeviceInfo(deviceInfo.DeviceId, deviceInfo.DeviceName)
 	}
+	device.Address = deviceInfo.Address
+	device.Port = deviceInfo.Port
+	device.TransmitPort = deviceInfo.TransmitPort
 	device.Connected = true
 	err := s.db.Save(device).Error
 	utils.HandleError(err, utils.PanicOnError)
@@ -147,7 +150,8 @@ func (s *DeviceService) Pair(deviceScanInfo *dto.DeviceScanInfo, pairCode string
 	device := s.GetDeviceById(deviceId)
 	if device == nil {
 		device = &entity.DeviceInfo{
-			DeviceId: deviceId,
+			BaseModel: entity.GetNewBaseModel(),
+			DeviceId:  deviceId,
 		}
 	}
 	device.DeviceName = deviceScanInfo.DeviceName
