@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"go-trans/pkg/models/consts"
 	"go-trans/pkg/models/dto"
 	"go-trans/pkg/models/entity"
@@ -92,7 +93,9 @@ func (s *SendTaskService) GetSendTaskDtos(page, size int, order string) ([]*dto.
 		deviceInfo := GetServiceContext().DeviceService.GetConnectedDeviceById(task.ReceiverId)
 		if deviceInfo == nil {
 			task.Status = consts.Fail
-			s.UpdateSendTask(task)
+			task.ErrorMsg = fmt.Sprintf("cannot find receiver, id:%v", task.ReceiverId)
+			err := s.UpdateSendTask(task)
+			utils.HandleError(err)
 			continue
 		}
 		result = append(result, &dto.SendTaskDto{
