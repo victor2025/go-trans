@@ -35,6 +35,7 @@ func NewConfigService(config map[string]any) *ConfigService {
 	if config != nil {
 		for k, v := range config {
 			startupConfig[k] = v
+			configService.saveStartupConfigToCache(k, v)
 		}
 	}
 	return configService
@@ -45,7 +46,7 @@ func (c *ConfigService) loadConfigFromFiles() {
 	utils.HandleError(err)
 }
 
-// GetOrDefaultFromStartupConfig 从map中获取配置，已废弃
+// GetOrDefaultFromStartupConfig 获取启动配置
 func (c *ConfigService) GetOrDefaultFromStartupConfig(key, defaultVal string) string {
 	parts := strings.Split(key, ".")
 	config := defaultVal
@@ -61,6 +62,17 @@ func (c *ConfigService) GetOrDefaultFromStartupConfig(key, defaultVal string) st
 		}
 	}
 	return config
+}
+
+// 将启动参数保存到缓存中
+func (c *ConfigService) saveStartupConfigToCache(currKey string, config any) {
+	if valMap, ok := config.(map[string]interface{}); ok {
+		for key, val := range valMap {
+			c.saveStartupConfigToCache(currKey+"."+key, val)
+		}
+	} else {
+		c.configCache.Store(currKey, config)
+	}
 }
 
 func (c *ConfigService) GetOrDefault(key, defaultVal string) string {
